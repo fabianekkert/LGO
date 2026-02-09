@@ -3,7 +3,7 @@
 //  LGO
 //
 //  Created by Fabian on 09.02.26.
-//
+//  Main
 
 import SwiftUI
 import SwiftData
