@@ -15,37 +15,38 @@ struct ContentView: View {
     var body: some View {
         
         NavigationSplitView {
-            ZStack{
-                
+            ZStack {
                 List {
-                    
-                    ForEach(items) { item in
-                        NavigationLink {
+                    ForEach(items) {
+                        item in NavigationLink {
                             Text("Test")
-                        } label: {
-                            VStack{
+                        }
+                        label: {
+                            VStack {
                                 Text("Artikel")
                                 Text("Artikelnummer")
-                                    
                             }
-                            
                         }
-                        
                     }
-                    
                     .onDelete(perform: deleteItems)
-                    
                 }
-                
+                .navigationTitle(Text("Lager"))
             }
 #if os(macOS)
             .navigationSplitViewColumnWidth(min: 180, ideal: 200)
 #endif
             .toolbar {
 #if os(iOS)
-                ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
-                        Button("Einstellungen", systemImage: "gear", action: addItem)
+                        // Navigiert zu den Einstellungen (mit Zurück-Button auf iPhone)
+                        NavigationLink {
+                            // Ziel: Dein SettingsView
+                            SettingsView()
+                        } label: {
+                            // Label im Menü mit Zahnrad-Icon
+                            Label("Einstellungen", systemImage: "gear")
+                        }
                         Button("Delete All", systemImage: "trash") {
                             withAnimation {
                                 for item in items {
@@ -53,15 +54,18 @@ struct ContentView: View {
                                 }
                             }
                         }
-                    } label: {
+                    }
+                label: {
                         Label("Menü", systemImage: "ellipsis")
                     }
                 }
 #endif
                 ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
+                    // Navigiert zu addItem (mit Zurück-Button auf iPhone)
+                    NavigationLink {
+                        // Ziel: addItem
+                        ItemView()
+                    } label: {/*Label in der Toolbar*/ Label("Add Item", systemImage: "plus")}
                 }
             }
         } detail: {
