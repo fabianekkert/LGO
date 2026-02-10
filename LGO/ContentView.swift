@@ -39,7 +39,18 @@ struct ContentView: View {
             .toolbar {
 #if os(iOS)
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
+                    Menu {
+                        Button("Add Item", systemImage: "plus", action: addItem)
+                        Button("Delete All", systemImage: "trash") {
+                            withAnimation {
+                                for item in items {
+                                    modelContext.delete(item)
+                                }
+                            }
+                        }
+                    } label: {
+                        Label("Menü", systemImage: "ellipsis")
+                    }
                 }
 #endif
                 ToolbarItem {
