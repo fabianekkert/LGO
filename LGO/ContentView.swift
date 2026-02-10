@@ -40,7 +40,7 @@ struct ContentView: View {
 #if os(iOS)
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
-                        Button("Add Item", systemImage: "plus", action: addItem)
+                        Button("Einstellungen", systemImage: "gear", action: addItem)
                         Button("Delete All", systemImage: "trash") {
                             withAnimation {
                                 for item in items {
