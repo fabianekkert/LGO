@@ -21,9 +21,14 @@ struct ContentView: View {
                     
                     ForEach(items) { item in
                         NavigationLink {
-                            Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
+                            Text("Test")
                         } label: {
-                            Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+                            VStack{
+                                Text("Artikel")
+                                Text("Artikelnummer")
+                                    
+                            }
+                            
                         }
                         
                     }
@@ -40,7 +45,7 @@ struct ContentView: View {
 #if os(iOS)
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
-                        Button("Xhafer", systemImage: "gear", action: addItem)
+                        Button("Einstellungen", systemImage: "gear", action: addItem)
                         Button("Delete All", systemImage: "trash") {
                             withAnimation {
                                 for item in items {
@@ -84,3 +89,4 @@ struct ContentView: View {
     ContentView()
         .modelContainer(for: Item.self, inMemory: true)
 }
+
