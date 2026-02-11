@@ -16,20 +16,16 @@ struct ContentView: View {
         
         NavigationSplitView {
             ZStack {
+                
                 List {
-                    ForEach(items) {
-                        item in NavigationLink {
-                            Text("Test")
-                        }
-                        label: {
-                            VStack {
-                                Text("Artikel")
-                                Text("Artikelnummer")
-                            }
-                        }
+                    NavigationLink {
+                        Detail()
+                    } label: {
+                        Text("Hello, World!")
                     }
-                    .onDelete(perform: deleteItems)
+                    //.onDelete(perform: deleteItems)
                 }
+                .padding(.vertical)
                 .navigationTitle(Text("Lager"))
             }
 #if os(macOS)
@@ -38,24 +34,16 @@ struct ContentView: View {
             .toolbar {
 #if os(iOS)
             ToolbarItem(placement: .navigationBarTrailing) {
-                    Menu {
-                        // Navigiert zu den Einstellungen (mit Zurück-Button auf iPhone)
-                        NavigationLink {
-                            // Ziel: Dein SettingsView
-                            SettingsView()
-                        } label: {
-                            // Label im Menü mit Zahnrad-Icon
-                            Label("Einstellungen", systemImage: "gear")
-                        }
-                        Button("Delete All", systemImage: "trash") {
-                            withAnimation {
-                                for item in items {
-                                    modelContext.delete(item)
-                                }
+                        Menu {
+                            // Navigiert zu den Einstellungen (mit Zurück-Button auf iPhone)
+                            NavigationLink {
+                                // Ziel: Dein SettingsView
+                                Settings()
+                            } label: {
+                                // Label im Menü mit Zahnrad-Icon
+                                Label("Einstellungen", systemImage: "gear")
                             }
-                        }
-                    }
-                label: {
+                    } label: {
                         Label("Menü", systemImage: "ellipsis")
                     }
                 }
@@ -64,7 +52,7 @@ struct ContentView: View {
                     // Navigiert zu addItem (mit Zurück-Button auf iPhone)
                     NavigationLink {
                         // Ziel: addItem
-                        addItemView()
+                        addItem()
                     } label: {/*Label in der Toolbar*/ Label("Add Item", systemImage: "plus")}
                 }
             }
@@ -73,13 +61,13 @@ struct ContentView: View {
         }
     }
 
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
+            /*private func addItem() {
+                withAnimation {
+                    let newItem = Item(timestamp: Date())
+                    modelContext.insert(newItem)
+                }
+            }
+             */
     private func deleteItems(offsets: IndexSet) {
         withAnimation {
             for index in offsets {

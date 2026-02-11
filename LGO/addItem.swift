@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-public struct addItemView: View {
+public struct addItem: View {
    
     public init() {}
     public var body: some View {
@@ -30,8 +30,8 @@ public struct addItemView: View {
                     Image("Map")
                         .resizable()
                         .scaledToFit()
-                        .listRowInsets(EdgeInsets()) // optional: Bild auf volle Breite der List
-                        .padding(.vertical, 12)
+                        .listRowInsets(EdgeInsets())
+                    
                 }
             }
             .listStyle(.insetGrouped) // optional für iOS-Optik
@@ -57,10 +57,10 @@ public struct addItemView: View {
 }
 
 
-struct addItemView_Previews: PreviewProvider {
+struct addItem_Previews: PreviewProvider {
     static var previews: some View {
         NavigationStack {
-            addItemView()
+            addItem()
         }
     }
 }
