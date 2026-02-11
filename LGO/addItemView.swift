@@ -11,36 +11,32 @@ public struct addItemView: View {
    
     public init() {}
     public var body: some View {
-                
-                List {
+       
+// Content als Liste die man Scrollen kann
+            List {
+                Section {
                     Text("Bezeichnung")
                     Text("Artikelnummer")
                 }
-                .foregroundColor(.secondary)
-                .padding(12)
-                
                 
 
-                
-                List {
+                Section {
                     Text("Anzahl")
-                        .foregroundColor(.secondary)
-                    HStack {
-                        Text("Mindestbestand")
-                    }
+                    HStack { Text("Mindestbestand") }
                     Text("Lagerplatz")
-                        .foregroundColor(.secondary)
                 }
-                .padding(12)
-                   
-                Image("Map")
-                    .resizable()
-                    .scaledToFit()
-                    .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
-            
-            .padding(.horizontal)
-            .padding(.vertical, 12)
+
+                Section {
+                    Image("Map")
+                        .resizable()
+                        .scaledToFit()
+                        .listRowInsets(EdgeInsets()) // optional: Bild auf volle Breite der List
+                        .padding(.vertical, 12)
+                }
+            }
+            .listStyle(.insetGrouped) // optional für iOS-Optik
         
+// Toolbar oben und unten
         
         .toolbar {          //  Toolbar anlegen
             ToolbarItem(placement: .topBarTrailing) {
