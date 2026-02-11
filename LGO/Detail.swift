@@ -1,20 +1,20 @@
 import SwiftUI
+import SwiftData
 
 public struct Detail: View {
-    public init() {}
-    
+    let item: Item
+
     public var body: some View {
         List {
             Section {
-                Text("Bezeichnung")
-                Text("Artikelnummer")
+                Text(item.name ?? "Unbenannt")
+                Text(item.number ?? "-")
             }
-            
 
             Section {
-                Text("Anzahl")
-                HStack { Text("Mindestbestand") }
-                Text("Lagerplatz")
+                Text(String(item.quantity ?? 0))
+                HStack { Text("Mindestbestand") ; Spacer() ; Text(item.minQuantity != nil ? String(item.minQuantity!) : "-") }
+                Text(item.location ?? "Lagerplatz unbekannt")
             }
 
             Section {
@@ -22,15 +22,12 @@ public struct Detail: View {
                     .resizable()
                     .scaledToFit()
                     .listRowInsets(EdgeInsets())
-                
             }
         }
-        .listStyle(.insetGrouped) // optional für iOS-Optik
-        
-        .navigationTitle("Artikel 1")
+        .listStyle(.insetGrouped)
+        .navigationTitle(item.name ?? "Artikel")
         .navigationBarTitleDisplayMode(.inline)
-        .navigationSubtitle("911.515.565.251")
-        
+        .navigationSubtitle(item.number ?? "-")
 #if os(macOS)
         .navigationSplitViewColumnWidth(min: 180, ideal: 200)
 #endif
@@ -50,10 +47,11 @@ public struct Detail: View {
     }
 }
 
+// Funktion um die Preview zu ermöglichen
 struct Detail_Previews: PreviewProvider {
     static var previews: some View {
         NavigationStack {
-            Detail()
+            Detail(item: Item(timestamp: Date(), name: "Scheinwerfer", number: "911.515.565.251", quantity: 5, minQuantity: 2, location: "A-12"))
         }
     }
 }

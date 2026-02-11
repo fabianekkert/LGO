@@ -15,18 +15,35 @@ struct ContentView: View {
     var body: some View {
         
         NavigationSplitView {
+           
             ZStack {
                 
-                List {
-                    NavigationLink {
-                        Detail()
-                    } label: {
-                        Text("Hello, World!")
-                    }
-                    //.onDelete(perform: deleteItems)
-                }
-                .padding(.vertical)
-                .navigationTitle(Text("Lager"))
+                 List {
+                     ForEach(items) { item in
+                         NavigationLink {
+                             Detail(item: item)
+                         } label: {
+                             HStack {
+                                 VStack(alignment: .leading) {
+                                     Text(item.name ?? "Unbenannt")
+                                         .font(.title3)
+                                     Text(item.number ?? "-")
+                                         .font(.caption)
+                                         .foregroundColor(.secondary)
+                                 }
+                                 .frame(maxWidth: .infinity, alignment: .leading)
+
+                                 Spacer()
+
+                                 Text(String(item.quantity ?? 0))
+                                     .frame(width: 40, height: 20, alignment: .trailing)
+                             }
+                         }
+                     }
+                     //.onDelete(perform: deleteItems)
+                 }
+                    .padding(.vertical)
+                    .navigationTitle(Text("Lager"))
             }
 #if os(macOS)
             .navigationSplitViewColumnWidth(min: 180, ideal: 200)
@@ -57,7 +74,7 @@ struct ContentView: View {
                 }
             }
         } detail: {
-            Text("Item")
+            Text("Wähle einen Artikel")
         }
     }
 
@@ -77,6 +94,7 @@ struct ContentView: View {
     }
 }
 
+// Funktion um die Preview zu ermöglichen
 #Preview {
     ContentView()
         .modelContainer(for: Item.self, inMemory: true)
