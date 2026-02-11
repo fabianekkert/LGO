@@ -64,7 +64,7 @@ struct ContentView: View {
                     // Navigiert zu addItem (mit Zurück-Button auf iPhone)
                     NavigationLink {
                         // Ziel: addItem
-                        ItemView()
+                        addItemView()
                     } label: {/*Label in der Toolbar*/ Label("Add Item", systemImage: "plus")}
                 }
             }
