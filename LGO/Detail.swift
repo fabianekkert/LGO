@@ -14,7 +14,7 @@ public struct Detail: View {
     @State private var bezeichnung: String = ""
     @State private var artikelnummer: String = ""
     @State private var anzahl: String = ""
-    @State private var mindestbestand: String = ""
+    @State private var meldebestand: String = ""
     @State private var lagerplatz: String = ""
 
 // Variable für den Schaltzustand vom Toggle
@@ -44,12 +44,21 @@ public struct Detail: View {
                     }
                     .foregroundStyle(.secondary)
                 }
-                HStack {
-                    Text("Mindestbestand")
-                    Spacer()
-                    Text(item.minQuantity != nil ? String(item.minQuantity!) : "-")
+                HStack{
+                    Text("Meldebestand")
+                    Spacer()            // durch den Spacer wird der Text links- und der Toggle rechtsbündig
+                    Toggle("", isOn: $meldebestandAktiv)
+                        .labelsHidden() // versteckt das (leere) Label des Toggles
                 }
-                Text(item.location ?? "Lagerplatz unbekannt")
+                if meldebestandAktiv {  // Das Textfeld wird ausgeblendet, wenn der Toggle inaktiv ist
+                    HStack(spacing: 8) {
+                        TextField("0", text: $meldebestand)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                    }
+                }
             }
 
             Section {

@@ -11,9 +11,10 @@ public struct Login: View {
     @Environment(\.dismiss) private var dismiss
     
 // Diese Variablen werden von den Textfeldern als Binding benötigt
+    @State private var id:       String = ""
     @State private var username: String = ""
     @State private var passwort: String = ""
-    @State private var isPasswordVisible: Bool = false
+    @State private var isPasswordVisible: Bool = true
     
     public init() {}
     public var body: some View {
@@ -26,6 +27,15 @@ public struct Login: View {
                 VStack{
                     Text("Login")
                         .font(Font.largeTitle.bold())
+                    TextField("Firmen ID", text: $id)
+                        .multilineTextAlignment(.center)
+                        .textContentType(.username)
+                        .autocorrectionDisabled(true)
+                        .autocapitalization(.none)
+                        .padding(10)
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(.secondary, lineWidth: 1))
+                        .frame(width: 300)
+                    Spacer().frame(height: 12)
                     TextField("Nutzername", text: $username)
                         .multilineTextAlignment(.center)
                         .textContentType(.username)
@@ -71,7 +81,7 @@ public struct Login: View {
             ToolbarItem (placement: .bottomBar){Button {
                     dismiss() // Action austauschen mit abschicken an Server
                 } label: {
-                    Text("Bestätigen")
+                    Text("Weiter")
                 }
                 .frame(maxWidth: .infinity)
             }

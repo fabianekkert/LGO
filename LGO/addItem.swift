@@ -14,10 +14,10 @@ public struct addItem: View {
     @State private var bezeichnung: String = ""
     @State private var artikelnummer: String = ""
     @State private var anzahl: String = ""
-    @State private var mindestbestand: String = ""
+    @State private var meldebestand: String = ""
     @State private var lagerplatz: String = ""
 
-    // Variable für den Schaltzustand vom Toggle
+// Variable für den Schaltzustand vom Toggle
     @State private var meldebestandAktiv: Bool = false
     
     public init() {}
@@ -50,7 +50,7 @@ public struct addItem: View {
                     }
                     if meldebestandAktiv {  // Das Textfeld wird ausgeblendet, wenn der Toggle inaktiv ist
                         HStack(spacing: 8) {
-                            TextField("0", text: $mindestbestand)
+                            TextField("0", text: $meldebestand)
                                 .keyboardType(.numberPad)
                                 .multilineTextAlignment(.trailing)
                                 .foregroundStyle(.secondary)
@@ -87,7 +87,7 @@ public struct addItem: View {
                     Button {
                             // Zahlen sicher umwandeln
                             let qty = Int(anzahl)
-                            let minQ = Double(mindestbestand)
+                            let minQ = Double(meldebestand)
 
                             // Neuen Artikel anlegen und an SwiftData übergeben
                             let newItem = Item(
