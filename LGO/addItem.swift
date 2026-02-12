@@ -16,7 +16,9 @@ public struct addItem: View {
     @State private var anzahl: String = ""
     @State private var mindestbestand: String = ""
     @State private var lagerplatz: String = ""
-    @State private var meldebestandAktiv: Bool = false    // Variable für den Schaltzustand vom Toggle
+
+    // Variable für den Schaltzustand vom Toggle
+    @State private var meldebestandAktiv: Bool = false
     
     public init() {}
     public var body: some View {
@@ -29,8 +31,17 @@ public struct addItem: View {
                 }
 
                 Section {
-                    TextField("Anzahl", text: $anzahl)
-                        .keyboardType(.numberPad) // iOS: Zahlentastatur
+                    HStack {
+                        Text("Anzahl")
+                        Spacer()
+                        HStack(spacing: 8) {
+                            TextField("0", text: $anzahl)
+                                .keyboardType(.numberPad)
+                                .multilineTextAlignment(.trailing)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                        }
+                    }
                     HStack{
                         Text("Meldebestand")
                         Spacer()            // durch den Spacer wird der Text links- und der Toggle rechtsbündig
@@ -38,11 +49,25 @@ public struct addItem: View {
                             .labelsHidden() // versteckt das (leere) Label des Toggles
                     }
                     if meldebestandAktiv {  // Das Textfeld wird ausgeblendet, wenn der Toggle inaktiv ist
-                        TextField("Meldebestand eingeben", text: $mindestbestand)
-                            .keyboardType(.numberPad)
+                        HStack(spacing: 8) {
+                            TextField("0", text: $mindestbestand)
+                                .keyboardType(.numberPad)
+                                .multilineTextAlignment(.trailing)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                        }
                     }
-                    TextField("Lagerplatz", text: $lagerplatz)
-                        .keyboardType(.numberPad)
+                    HStack {
+                        Text("Lagerplatz")
+                        
+                        HStack(spacing: 8) {
+                            TextField("0", text: $lagerplatz)
+                                .keyboardType(.numberPad)
+                                .multilineTextAlignment(.trailing)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                        }
+                    }
                 }
 
                 Section {
@@ -78,7 +103,7 @@ public struct addItem: View {
                             // Ansicht schließen
                             dismiss()
                     } label: {
-                        Text("Artikel anlegen")
+                        Text("Artikel hinzufügen")
                     }
                     .frame(maxWidth: .infinity)
             }

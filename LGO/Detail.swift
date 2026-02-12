@@ -1,19 +1,54 @@
+//  Detail.swift
+//  LGO
+//  Created by Fabian on 11.02.26.
+
 import SwiftUI
 import SwiftData
 
 public struct Detail: View {
+    
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+
+// Diese Variablen werden von den Textfeldern als Binding benötigt
+    @State private var bezeichnung: String = ""
+    @State private var artikelnummer: String = ""
+    @State private var anzahl: String = ""
+    @State private var mindestbestand: String = ""
+    @State private var lagerplatz: String = ""
+
+// Variable für den Schaltzustand vom Toggle
+    @State private var meldebestandAktiv: Bool = false
+    
     let item: Item
 
     public var body: some View {
+        
+// Content als Liste die man Scrollen kann
         List {
             Section {
                 Text(item.name ?? "Unbenannt")
                 Text(item.number ?? "-")
+                    .foregroundStyle(.secondary)
             }
 
             Section {
-                Text(String(item.quantity ?? 0))
-                HStack { Text("Mindestbestand") ; Spacer() ; Text(item.minQuantity != nil ? String(item.minQuantity!) : "-") }
+                HStack {
+                    Text("Anzahl")
+                    Spacer()
+                    HStack(spacing: 8) {
+                        Text(String(item.quantity ?? 0))
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                        Image(systemName: "chevron.right")
+                    }
+                    .foregroundStyle(.secondary)
+                }
+                HStack {
+                    Text("Mindestbestand")
+                    Spacer()
+                    Text(item.minQuantity != nil ? String(item.minQuantity!) : "-")
+                }
                 Text(item.location ?? "Lagerplatz unbekannt")
             }
 
