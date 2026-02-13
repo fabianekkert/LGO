@@ -31,7 +31,7 @@ public struct Login: View {
                         .multilineTextAlignment(.center)
                         .textContentType(.username)
                         .autocorrectionDisabled(true)
-                        .autocapitalization(.none)
+                        //.autocapitalization(.none)
                         .padding(10)
                         .overlay(RoundedRectangle(cornerRadius: 12).stroke(.secondary, lineWidth: 1))
                         .frame(width: 300)

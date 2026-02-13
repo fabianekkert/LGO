@@ -1,103 +1,139 @@
-//  Detail.swift
+//  addItem.swift
 //  LGO
 //  Created by Fabian on 11.02.26.
+//  In dieser Datei befindet sich die Detail View. Diese Ansicht kommt auch, wenn man einen neuen Artikel anlegt.
 
 import SwiftUI
 import SwiftData
 
-public struct Detail: View {
+struct Detail: View {
     
-    @Environment(\.modelContext) private var modelContext
+    // Diese beiden Umgebungen ermöglichen die Nutzung von SwiftData und das Schließen des Screens
+    @Environment(\.modelContext) var modelContext
     @Environment(\.dismiss) private var dismiss
-
-// Diese Variablen werden von den Textfeldern als Binding benötigt
-    @State private var bezeichnung: String = ""
-    @State private var artikelnummer: String = ""
-    @State private var anzahl: String = ""
-    @State private var meldebestand: String = ""
-    @State private var lagerplatz: String = ""
-
-// Variable für den Schaltzustand vom Toggle
-    @State private var meldebestandAktiv: Bool = false
     
-    let item: Item
-
+    // Die Variablen werden nur hier verwendet (Daher auch private var). Sie werden in Zeile 76 mit den Init-Werten aus der class Item gefüllt. Bei Bestätigung in Zeile 103-122 werden die Werte in die Variablen von der class Item geschrieben und gespeichert. Eine ID wird automatisch generiert und muss daher nicht in ContentView.swift Zeile 16 zugewiesen werden.
+    @State var         item:            Item             // Übergebe class an @State var item
+    @State private var itemname:        String = ""      // Variable für die Artikelbezeichnung
+    @State private var itemnumber:      String = ""      // Variable für die Artikelnummer
+    @State private var quantity:        String = ""      // Variable für die Anzahl
+    @State private var minQuantityIsOn: Bool   = false   // Variable für den Schaltzustand vom Toggle Meldebestand
+    @State private var minQuantity:     String = ""      // Variable für den Meldebestand
+    @State private var orderdIsOn:      Bool   = false   // Variable für den Schaltzustand vom Toggle Bestellt
+    @State private var location:        String = ""      // Variable für den Lagerort
+    @State private var edit:            Bool   = false   // Variable für die Action bearbeiten
+    @State private var delete:          Bool   = false   // Variable für die Ation löschen
+    
     public var body: some View {
-        
-// Content als Liste die man Scrollen kann
         List {
             Section {
-                Text(item.name ?? "Unbenannt")
-                Text(item.number ?? "-")
-                    .foregroundStyle(.secondary)
+                TextField("Artikelbezeichnung", text: $itemname)
+                TextField("Artikelnummer", text: $itemnumber)
             }
-
             Section {
                 HStack {
                     Text("Anzahl")
                     Spacer()
                     HStack(spacing: 8) {
-                        Text(String(item.quantity ?? 0))
+                        TextField("0", text: $quantity)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
                         Image(systemName: "chevron.right")
+                            .foregroundStyle(.secondary)
                     }
-                    .foregroundStyle(.secondary)
                 }
-                HStack{
-                    Text("Meldebestand")
-                    Spacer()            // durch den Spacer wird der Text links- und der Toggle rechtsbündig
-                    Toggle("", isOn: $meldebestandAktiv)
-                        .labelsHidden() // versteckt das (leere) Label des Toggles
-                }
-                if meldebestandAktiv {  // Das Textfeld wird ausgeblendet, wenn der Toggle inaktiv ist
+                Toggle("Meldebestand", isOn: $minQuantityIsOn)
+                if minQuantityIsOn {  // Das Textfeld wird ausgeblendet, wenn der Toggle inaktiv ist
                     HStack(spacing: 8) {
                         Spacer()
-                        Text(String(item.minQuantity ?? 0))
+                        TextField("0", text: $minQuantity)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
                         Image(systemName: "chevron.right")
                     }
                     .foregroundStyle(.secondary)
                 }
+                Toggle("Bestellt", isOn: $orderdIsOn)
                 
             }
-
             Section {
-                Image("Map")
+                HStack {
+                    Text("Lagerort")
+                    Spacer()
+                    HStack(spacing: 8) {
+                        TextField("0", text: $location)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                        Spacer()
+                    }
+                }
+                /*Image("Map")
                     .resizable()
                     .scaledToFit()
-                    .listRowInsets(EdgeInsets())
+                    .listRowInsets(EdgeInsets())*/
+                
             }
-        }
-        .listStyle(.insetGrouped)
-        .navigationTitle(item.name ?? "Artikel")
-        .navigationBarTitleDisplayMode(.inline)
-        .navigationSubtitle(item.number ?? "-")
+            .onAppear() {
+                itemname = item.itemname
+                itemnumber = item.itemnumber
+                quantity = item.quantity
+                minQuantityIsOn = item.minQuantityIsOn
+                minQuantity = item.minQuantity
+                orderdIsOn = item.orderdIsOn
+                location = item.location
+                edit = item.edit
+                delete = item.delete
+            }
+            .navigationTitle(item.itemname)
+            .navigationSubtitle(item.itemnumber)
+            .navigationBarTitleDisplayMode( .inline )
+            .navigationBarBackButtonHidden(true)
+            
 #if os(macOS)
-        .navigationSplitViewColumnWidth(min: 180, ideal: 200)
+            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
 #endif
-        .toolbar {
+            .toolbar {
 #if os(iOS)
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Menu {
-                    Label("Umbenennen", systemImage: "pencil")
-                    Label("Löschen", systemImage: "trash")
-                        .foregroundColor(Color(.systemRed))
-                } label: {
-                    Label("Menü", systemImage: "ellipsis")
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                    }
                 }
-            }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        item.itemname = itemname
+                        item.itemnumber = itemnumber
+                        item.quantity = quantity
+                        item.minQuantityIsOn = minQuantityIsOn
+                        item.minQuantity = minQuantity
+                        item.orderdIsOn = orderdIsOn
+                        item.location = location
+                        item.edit = edit
+                        item.delete = delete
+                        modelContext.insert(item)
+                        guard let _ = try? modelContext.save() else {
+                            print("ERROR: Save on Detail did not work")
+                            return
+                        }
+                        dismiss()
+                    } label: {
+                        Image(systemName: "checkmark")
+                    }
+                }
+                
 #endif
+            }
         }
     }
 }
 
 // Funktion um die Preview zu ermöglichen
-struct Detail_Previews: PreviewProvider {
-    static var previews: some View {
-        NavigationStack {
-            Detail(item: Item(timestamp: Date(), name: "Scheinwerfer", number: "911.515.565.251", quantity: 2, minQuantity: 7, location: "A-12"))
-        }
+#Preview {
+    NavigationStack{
+        Detail(item: Item())
+            .modelContainer(for: Item.self, inMemory: true)
     }
 }
+

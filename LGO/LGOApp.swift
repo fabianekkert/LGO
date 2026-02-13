@@ -10,23 +10,18 @@ import SwiftData
 
 @main
 struct LGOApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
-
+    
+    @Environment(\.modelContext) var modelContext
+    
     var body: some Scene {
         WindowGroup {
+            //Login() //Startseite: Nimmt noch nicht den ganzen Screen ein. Login fertigstellen!
             ContentView()
+                .modelContainer(for: Item.self)
         }
-        .modelContainer(sharedModelContainer)
+    }
+    init() {
+        print(URL.applicationSupportDirectory.path(percentEncoded: false))
     }
 }
+
