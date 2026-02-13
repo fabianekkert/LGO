@@ -52,13 +52,15 @@ public struct Detail: View {
                 }
                 if meldebestandAktiv {  // Das Textfeld wird ausgeblendet, wenn der Toggle inaktiv ist
                     HStack(spacing: 8) {
-                        TextField("0", text: $meldebestand)
+                        Spacer()
+                        Text(String(item.minQuantity ?? 0))
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
-                            .foregroundStyle(.secondary)
-                        Spacer()
+                        Image(systemName: "chevron.right")
                     }
+                    .foregroundStyle(.secondary)
                 }
+                
             }
 
             Section {
@@ -95,7 +97,7 @@ public struct Detail: View {
 struct Detail_Previews: PreviewProvider {
     static var previews: some View {
         NavigationStack {
-            Detail(item: Item(timestamp: Date(), name: "Scheinwerfer", number: "911.515.565.251", quantity: 5, minQuantity: 2, location: "A-12"))
+            Detail(item: Item(timestamp: Date(), name: "Scheinwerfer", number: "911.515.565.251", quantity: 2, minQuantity: 7, location: "A-12"))
         }
     }
 }

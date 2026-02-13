@@ -14,7 +14,7 @@ public struct Login: View {
     @State private var id:       String = ""
     @State private var username: String = ""
     @State private var passwort: String = ""
-    @State private var isPasswordVisible: Bool = true
+    @State private var isPasswordVisible: Bool = false
     
     public init() {}
     public var body: some View {

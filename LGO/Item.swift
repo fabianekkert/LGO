@@ -14,14 +14,14 @@ final class Item {
     var name: String?
     var number: String?
     var quantity: Int?
-    var minQuantity: Double?
+    var minQuantity: Int?
     var location: String?
 
     init(timestamp: Date,
          name: String? = nil,
          number: String? = nil,
          quantity: Int? = 0,
-         minQuantity: Double? = nil,
+         minQuantity: Int? = 0,
          location: String? = nil) {
         self.timestamp = timestamp
         self.name = name

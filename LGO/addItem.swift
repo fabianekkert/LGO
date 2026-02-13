@@ -24,7 +24,7 @@ public struct addItem: View {
     public var body: some View {
        
 // Content als Liste die man Scrollen kann
-            List {
+           List {
                 Section {
                     TextField("Bezeichnung", text: $bezeichnung)
                     TextField("Artikelnummer", text: $artikelnummer)
@@ -42,7 +42,7 @@ public struct addItem: View {
                             Spacer()
                         }
                     }
-                    HStack{
+                    HStack {
                         Text("Meldebestand")
                         Spacer()            // durch den Spacer wird der Text links- und der Toggle rechtsbündig
                         Toggle("", isOn: $meldebestandAktiv)
@@ -87,7 +87,7 @@ public struct addItem: View {
                     Button {
                             // Zahlen sicher umwandeln
                             let qty = Int(anzahl)
-                            let minQ = Double(meldebestand)
+                            let minQ = Int(meldebestand)
 
                             // Neuen Artikel anlegen und an SwiftData übergeben
                             let newItem = Item(
