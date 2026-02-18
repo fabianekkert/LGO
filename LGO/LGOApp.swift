@@ -1,7 +1,5 @@
-//
 //  LGOApp.swift
 //  LGO
-//
 //  Created by Fabian on 09.02.26.
 //
 
@@ -15,7 +13,7 @@ struct LGOApp: App {
     
     var body: some Scene {
         WindowGroup {
-            //Login() //Startseite: Nimmt noch nicht den ganzen Screen ein. Login fertigstellen!
+            Login() //Startseite: Nimmt noch nicht den ganzen Screen ein. Login fertigstellen!
             ContentView()
                 .modelContainer(for: Item.self)
         }
