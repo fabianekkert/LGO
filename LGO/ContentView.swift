@@ -46,12 +46,9 @@ struct ContentView: View {
 #if os(iOS)
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
-                        // Navigiert zu den Einstellungen (mit Zurück-Button auf iPhone)
                         NavigationLink {
-                            // Ziel: Dein SettingsView
                             Settings()
                         } label: {
-                            // Label im Menü mit Zahnrad-Icon
                             Label("Einstellungen", systemImage: "gear")
                         }
                     } label: {

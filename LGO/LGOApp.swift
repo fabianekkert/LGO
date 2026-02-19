@@ -1,22 +1,18 @@
 //  LGOApp.swift
 //  LGO
 //  Created by Fabian on 09.02.26.
-//
 
 import SwiftUI
 import SwiftData
 
 @main
 struct LG0App: App {
-    
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var auth = AuthVerwaltung()
-    @State private var sheetIsPresented: Bool = false
+    @StateObject            private var auth = AuthVerwaltung()
+    @State                  private var sheetIsPresented: Bool = true
     
     var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
+        let schema = Schema(Item.self)
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
         
         do {
@@ -29,16 +25,12 @@ struct LG0App: App {
     var body: some Scene {
         WindowGroup {
             NavigationStack {
-                
-            ContentView()
-                .sheet(isPresented: $sheetIsPresented) {
-                    NavigationStack{
-                        Login()
-                    }
-                }
-                dismiss()
+                ContentView()
             }
-            .environmentObject(auth)
+            .fullScreenCover(isPresented: $sheetIsPresented) {
+                Login()
+                    .environmentObject(auth)
+            }
         }
         .modelContainer(sharedModelContainer)
     }
