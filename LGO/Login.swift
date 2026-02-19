@@ -19,10 +19,6 @@ public struct Login: View {
     @State private var istLaden: Bool = false
     @State private var fehlertext: String?
     
-    
-    
-    
-    public init() {}
     public var body: some View {
         
         VStack {
@@ -37,7 +33,7 @@ public struct Login: View {
                         .multilineTextAlignment(.center)
                         .textContentType(.username)
                         .autocorrectionDisabled(true)
-                        .autocapitalization(.none)
+                        //.autocapitalization(.none)
                         .padding(10)
                         .overlay(RoundedRectangle(cornerRadius: 12).stroke(.secondary, lineWidth: 1))
                         .frame(width: 300)
@@ -115,8 +111,7 @@ public struct Login: View {
 
                         if auth.token != nil {
                             print("Login OK - Token erhalten")
-                            //  KEIN dismiss() wenn du RootView nutzt
-                            // dismiss() nur wenn Login als Sheet geöffnet ist
+                           // dismiss() nur wenn Login als Sheet geöffnet ist
                         } else {
                             fehlertext = auth.fehlermeldung ?? "Login fehlgeschlagen"
                             print("Login fehlgeschlagen:", fehlertext ?? "")

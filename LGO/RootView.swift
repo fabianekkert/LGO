@@ -13,6 +13,7 @@ struct RootView: View {
     var body: some View {
         if auth.token == nil {
             Login()
+            
         } else {
             ContentView()
         }

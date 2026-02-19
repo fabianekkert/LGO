@@ -11,7 +11,9 @@ import SwiftData
 @main
 struct LG0App: App {
     
+    @Environment(\.dismiss) private var dismiss
     @StateObject private var auth = AuthVerwaltung()
+    @State private var sheetIsPresented: Bool = false
     
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
@@ -29,10 +31,22 @@ struct LG0App: App {
     var body: some Scene {
         WindowGroup {
             NavigationStack {
-                RootView()
+                
+            ContentView()
+                .sheet(isPresented: $sheetIsPresented) {
+                    NavigationStack{
+                        Login()
+                    }
+                }
+                dismiss()
             }
             .environmentObject(auth)
         }
         .modelContainer(sharedModelContainer)
     }
+    init() {
+        print(URL.applicationSupportDirectory.path(percentEncoded: false))
+    }
 }
+
+
