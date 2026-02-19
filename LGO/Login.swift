@@ -14,7 +14,7 @@ public struct Login: View {
     @State private var id:       String = ""
     @State private var username: String = ""
     @State private var passwort: String = ""
-    @State private var isPasswordVisible: Bool = true
+    @State private var isPasswordVisible: Bool = false
     
     public init() {}
     public var body: some View {
@@ -31,7 +31,7 @@ public struct Login: View {
                         .multilineTextAlignment(.center)
                         .textContentType(.username)
                         .autocorrectionDisabled(true)
-                        .autocapitalization(.none)
+                        //.autocapitalization(.none)
                         .padding(10)
                         .overlay(RoundedRectangle(cornerRadius: 12).stroke(.secondary, lineWidth: 1))
                         .frame(width: 300)
