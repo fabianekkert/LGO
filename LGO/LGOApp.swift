@@ -1,7 +1,5 @@
-//
 //  LGOApp.swift
 //  LGO
-//
 //  Created by Fabian on 09.02.26.
 //
 
