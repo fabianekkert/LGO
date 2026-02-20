@@ -9,7 +9,7 @@ import SwiftData
 struct LG0App: App {
     @Environment(\.dismiss) private var dismiss
     @StateObject            private var auth = AuthVerwaltung()
-    @State                  private var sheetIsPresented: Bool = true
+    @State                  private var fullScreenCoverIsPresented: Bool = true
     
     var sharedModelContainer: ModelContainer = {
         let schema = Schema(Item.self)
@@ -27,7 +27,7 @@ struct LG0App: App {
             NavigationStack {
                 ContentView()
             }
-            .fullScreenCover(isPresented: $sheetIsPresented) {
+            .fullScreenCover(isPresented: $fullScreenCoverIsPresented) {
                 Login()
                     .environmentObject(auth)
             }

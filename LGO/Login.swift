@@ -20,7 +20,7 @@ struct Login: View {
     @State private var fehlertext:        String?
     
     public var body: some View {
-        VStack {    // Die gesamte Darstellung bis Zeile 86.
+        VStack {
             Spacer()
             HStack {
                 VStack{
@@ -45,14 +45,14 @@ struct Login: View {
                         .frame(width: 300)
                     Spacer().frame(height: 12)
                     ZStack {
-                        Group { // Als Gruppe, weil nur einer von beiden angezeigt werden soll
-                            if isPasswordVisible {  // Togglezustand (Per Default als nicht sichtbar)
-                                TextField("Passwort", text: $passwort)  // Passwort wird in @State private var passwort geschrieben
+                        Group {                                 // Als Gruppe, weil nur einer von beiden angezeigt werden soll
+                            if isPasswordVisible {              // Togglezustand (Per Default als nicht sichtbar)
+                                TextField("Passwort", text: $passwort)          // Passwort wird in @State private var passwort geschrieben
                                     .textContentType(.password)
                                     .autocorrectionDisabled(true)
                                     .autocapitalization(.none)
                             } else {
-                                SecureField("Passwort", text: $passwort)    // Passwort wird in @State private var passwort geschrieben
+                                SecureField("Passwort", text: $passwort)        // Passwort wird in @State private var passwort geschrieben
                                     .textContentType(.password)
                                     .autocorrectionDisabled(true)
                                     .autocapitalization(.none)
@@ -71,10 +71,10 @@ struct Login: View {
                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(.secondary, lineWidth: 1))
                     .frame(width: 300)
                     
-                    if istLaden {   // ProgressView startet automatisch, wenn istLaden auf true geschaltet wird
+                    if istLaden {                                               // ProgressView startet automatisch, wenn istLaden auf true geschaltet wird
                         ProgressView().padding(.top, 10)
                     }
-                    if let fehlertext { // Fehlertext hat den Wert "nil". Die Variable wird in Zeile 92 mit dem Fehlertext gefüllt und aus Zeile 105 geprintet
+                    if let fehlertext {                                         // Fehlertext hat den Wert "nil". Die Variable wird in Zeile 92 mit dem Fehlertext gefüllt und aus Zeile 105 geprintet
                         Text(fehlertext)
                             .foregroundColor(.red)
                             .padding(.top, 8)
@@ -88,19 +88,22 @@ struct Login: View {
         .toolbar {
             ToolbarItem(placement: .bottomBar) {
                 Button {
-                    Task { // passiert alles, wenn die Schaltfläche betätigt wird.
+                    Task {                                                       // passiert alles, wenn die Schaltfläche betätigt wird.
                         fehlertext = nil
                         istLaden = true
                         
+                        auth.abmelden()
+                        
                         print(" Weiter wurde gedrückt")
                         print(" Login startet...")
+                        
                         dismiss()
                         await auth.anmelden(firmenID: companyid, benutzername: username, passwort: passwort) // Siehe Communikation Zeile 130-139
-                        istLaden = false // Durch Wertänderung wird ProgressView gestartet.
+                        istLaden = false                                          // Durch Wertänderung wird ProgressView gestartet.
                         
                         if auth.token != nil {
                             print("Login OK - Token erhalten")
-                            // dismiss() nur wenn Login als Sheet geöffnet ist
+                            dismiss()
                         } else {
                             fehlertext = auth.fehlermeldung ?? "Login fehlgeschlagen"
                             print("Login fehlgeschlagen:", fehlertext ?? "")
