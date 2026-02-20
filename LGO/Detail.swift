@@ -1,4 +1,4 @@
-//  addItem.swift
+//  Detail.swift
 //  LGO
 //  Created by Fabian on 11.02.26.
 //  In dieser Datei befindet sich die Detail View. Diese Ansicht kommt auch, wenn man einen neuen Artikel anlegt.
@@ -13,7 +13,7 @@ struct Detail: View {
     @Environment(\.dismiss) private var dismiss
     
     // Die Variablen werden nur hier verwendet (Daher auch private var). Sie werden in Zeile 76 mit den Init-Werten aus der class Item gefüllt. Bei Bestätigung in Zeile 103-122 werden die Werte in die Variablen von der class Item geschrieben und gespeichert. Eine ID wird automatisch generiert und muss daher nicht in ContentView.swift Zeile 16 zugewiesen werden.
-    @State var         item:            Item             // Übergebe class an @State var item
+    @Bindable var      item:            Item             // Übergebe class an @State var item
     @State private var itemname:        String = ""      // Variable für die Artikelbezeichnung
     @State private var itemnumber:      String = ""      // Variable für die Artikelnummer
     @State private var quantity:        String = ""      // Variable für die Anzahl
@@ -21,8 +21,6 @@ struct Detail: View {
     @State private var minQuantity:     String = ""      // Variable für den Meldebestand
     @State private var orderdIsOn:      Bool   = false   // Variable für den Schaltzustand vom Toggle Bestellt
     @State private var location:        String = ""      // Variable für den Lagerort
-    @State private var edit:            Bool   = false   // Variable für die Action bearbeiten
-    @State private var delete:          Bool   = false   // Variable für die Ation löschen
     
     public var body: some View {
         List {
@@ -62,7 +60,6 @@ struct Detail: View {
                     Spacer()
                     HStack(spacing: 8) {
                         TextField("0", text: $location)
-                            .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
                         Spacer()
                     }
@@ -76,13 +73,11 @@ struct Detail: View {
             .onAppear() {
                 itemname = item.itemname
                 itemnumber = item.itemnumber
-                quantity = item.quantity
+                quantity = String(item.quantity)
                 minQuantityIsOn = item.minQuantityIsOn
-                minQuantity = item.minQuantity
+                minQuantity = String(item.minQuantity)
                 orderdIsOn = item.orderdIsOn
                 location = item.location
-                edit = item.edit
-                delete = item.delete
             }
             .navigationTitle(item.itemname)
             .navigationSubtitle(item.itemnumber)
@@ -105,13 +100,11 @@ struct Detail: View {
                     Button {
                         item.itemname = itemname
                         item.itemnumber = itemnumber
-                        item.quantity = quantity
+                        item.quantity = Int(quantity) ?? 0
                         item.minQuantityIsOn = minQuantityIsOn
-                        item.minQuantity = minQuantity
+                        item.minQuantity = Int(minQuantity) ?? 0
                         item.orderdIsOn = orderdIsOn
                         item.location = location
-                        item.edit = edit
-                        item.delete = delete
                         modelContext.insert(item)
                         guard let _ = try? modelContext.save() else {
                             print("ERROR: Save on Detail did not work")

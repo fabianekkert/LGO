@@ -20,12 +20,12 @@ struct ContentView: View {
                         HStack {
                             VStack (alignment: .leading) {
                                 Text(item.itemname)
-                                Text(item.itemnumber)
+                                Text(String(describing: item.itemnumber))
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
-                            Text(item.quantity)
+                            Text(String(describing: item.quantity))
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -46,12 +46,9 @@ struct ContentView: View {
 #if os(iOS)
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
-                        // Navigiert zu den Einstellungen (mit Zurück-Button auf iPhone)
                         NavigationLink {
-                            // Ziel: Dein SettingsView
                             Settings()
                         } label: {
-                            // Label im Menü mit Zahnrad-Icon
                             Label("Einstellungen", systemImage: "gear")
                         }
                     } label: {
@@ -76,5 +73,4 @@ struct ContentView: View {
     ContentView()
         .modelContainer(for: Item.self, inMemory: true)
 }
-
 

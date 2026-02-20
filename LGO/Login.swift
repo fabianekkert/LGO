@@ -1,42 +1,41 @@
 //  Login.swift
 //  LGO
 //  Created by Fabian on 12.02.26.
+//  In dieser Datei wird der LoginScreen beschrieben.
 
 import SwiftUI
 import SwiftData
 
-public struct Login: View {
+struct Login: View {
     
     @Environment(\.modelContext) private var modelContext
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss)      private var dismiss
+    @EnvironmentObject           private var auth: AuthVerwaltung
     
-// Diese Variablen werden von den Textfeldern als Binding benötigt
-    @State private var id:       String = ""
-    @State private var username: String = ""
-    @State private var passwort: String = ""
-    @State private var isPasswordVisible: Bool = false
+    @State private var companyid:                String = ""
+    @State private var username:          String = ""
+    @State private var passwort:          String = ""
+    @State private var isPasswordVisible: Bool   = false
+    @State private var istLaden:          Bool   = false
+    @State private var fehlertext:        String?
     
-    public init() {}
     public var body: some View {
-        
-        VStack {
-            
+        VStack {    // Die gesamte Darstellung bis Zeile 86.
             Spacer()
             HStack {
-                
                 VStack{
                     Text("Login")
                         .font(Font.largeTitle.bold())
-                    TextField("Firmen ID", text: $id)
+                    TextField("Firmen ID", text: $companyid)    // FirmenID wird in @State private var companyid geschrieben
                         .multilineTextAlignment(.center)
                         .textContentType(.username)
                         .autocorrectionDisabled(true)
-                        //.autocapitalization(.none)
+                        .autocapitalization(.none)
                         .padding(10)
                         .overlay(RoundedRectangle(cornerRadius: 12).stroke(.secondary, lineWidth: 1))
                         .frame(width: 300)
                     Spacer().frame(height: 12)
-                    TextField("Nutzername", text: $username)
+                    TextField("Nutzername", text: $username)    // Nutzername wird in @State private var username geschrieben
                         .multilineTextAlignment(.center)
                         .textContentType(.username)
                         .autocorrectionDisabled(true)
@@ -46,24 +45,23 @@ public struct Login: View {
                         .frame(width: 300)
                     Spacer().frame(height: 12)
                     ZStack {
-                        Group {
-                            if isPasswordVisible {
-                                TextField("Passwort", text: $passwort)
+                        Group { // Als Gruppe, weil nur einer von beiden angezeigt werden soll
+                            if isPasswordVisible {  // Togglezustand (Per Default als nicht sichtbar)
+                                TextField("Passwort", text: $passwort)  // Passwort wird in @State private var passwort geschrieben
                                     .textContentType(.password)
                                     .autocorrectionDisabled(true)
                                     .autocapitalization(.none)
                             } else {
-                                SecureField("Passwort", text: $passwort)
+                                SecureField("Passwort", text: $passwort)    // Passwort wird in @State private var passwort geschrieben
                                     .textContentType(.password)
                                     .autocorrectionDisabled(true)
                                     .autocapitalization(.none)
                             }
                         }
                         .multilineTextAlignment(.center)
-                        
                         HStack {
                             Spacer()
-                            Button(action: { isPasswordVisible.toggle() }) {
+                            Button(action: { isPasswordVisible.toggle() }) {    // Toggle für die Passwortanzeige: Änderd Zustand in Zeile 49-59 (if else)
                                 Image(systemName: isPasswordVisible ? "eye.slash" : "eye")
                             }
                             .buttonStyle(.plain)
@@ -72,33 +70,56 @@ public struct Login: View {
                     .padding(10)
                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(.secondary, lineWidth: 1))
                     .frame(width: 300)
+                    
+                    if istLaden {   // ProgressView startet automatisch, wenn istLaden auf true geschaltet wird
+                        ProgressView().padding(.top, 10)
+                    }
+                    if let fehlertext { // Fehlertext hat den Wert "nil". Die Variable wird in Zeile 92 mit dem Fehlertext gefüllt und aus Zeile 105 geprintet
+                        Text(fehlertext)
+                            .foregroundColor(.red)
+                            .padding(.top, 8)
+                            .frame(width: 300)
+                            .multilineTextAlignment(.center)
+                    }
                 }
             }
             Spacer()
         }
-        .toolbar {  // Toolbar anlegen
-            
-            ToolbarItem (placement: .bottomBar){Button {
-                    dismiss() // Action austauschen mit abschicken an Server
+        .toolbar {
+            ToolbarItem(placement: .bottomBar) {
+                Button {
+                    Task { // passiert alles, wenn die Schaltfläche betätigt wird.
+                        fehlertext = nil
+                        istLaden = true
+                        
+                        print(" Weiter wurde gedrückt")
+                        print(" Login startet...")
+                        dismiss()
+                        await auth.anmelden(firmenID: companyid, benutzername: username, passwort: passwort) // Siehe Communikation Zeile 130-139
+                        istLaden = false // Durch Wertänderung wird ProgressView gestartet.
+                        
+                        if auth.token != nil {
+                            print("Login OK - Token erhalten")
+                            // dismiss() nur wenn Login als Sheet geöffnet ist
+                        } else {
+                            fehlertext = auth.fehlermeldung ?? "Login fehlgeschlagen"
+                            print("Login fehlgeschlagen:", fehlertext ?? "")
+                        }
+                    }
                 } label: {
                     Text("Weiter")
                 }
                 .frame(maxWidth: .infinity)
+                .disabled(companyid.isEmpty || username.isEmpty || passwort.isEmpty || istLaden)
             }
         }
     }
 }
 
-
 // Funktion um die Preview zu ermöglichen
-    struct Login_Previews: PreviewProvider {
-        static var previews: some View {
-            NavigationStack {
-                Login()
-            }
-        }
+#Preview {
+    NavigationStack {
+        Login()
+            .environmentObject(AuthVerwaltung())
     }
-
-
-
-
+}
