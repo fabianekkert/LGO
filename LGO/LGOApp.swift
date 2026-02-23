@@ -7,9 +7,10 @@ import SwiftData
 
 @main
 struct LG0App: App {
-    @Environment(\.dismiss) private var dismiss
-    @StateObject            private var auth = AuthVerwaltung()
-    @State                  private var fullScreenCoverIsPresented: Bool = true
+    @Environment(\.dismiss)    private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
+    @StateObject               private var auth = AuthVerwaltung()
+    @State                     private var fullScreenCoverIsPresented: Bool = true
     
     var sharedModelContainer: ModelContainer = {
         let schema = Schema(Item.self)
@@ -30,6 +31,12 @@ struct LG0App: App {
             .fullScreenCover(isPresented: $fullScreenCoverIsPresented) {
                 Login()
                     .environmentObject(auth)
+            }
+            .onChange(of: scenePhase) { oldPhase, newPhase in
+                if newPhase == .background {
+                    // App geht in den Hintergrund → hier abmelden
+                    auth.abmelden()
+                }
             }
         }
         .modelContainer(sharedModelContainer)
