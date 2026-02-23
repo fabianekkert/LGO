@@ -120,7 +120,7 @@ final class APIClient {
 }
 
 // Authentifizierung
-@MainActor  // bringt alles auf den Hauptthread
+@MainActor                                          // bringt alles auf den Hauptthread
 final class AuthVerwaltung: ObservableObject {      // final class um es vor vererbung und überschreibungen zu schützen
     @Published var token:         String? = Schluesselbund.laden()
     @Published var fehlermeldung: String?
@@ -128,12 +128,12 @@ final class AuthVerwaltung: ObservableObject {      // final class um es vor ver
     private let api = APIClient(basisURL: URL(string: "http://100.83.30.52:8000")!) // private let ist eine konstante, die nur hier sichtbar ist
 
     func anmelden(firmenID: String, benutzername: String, passwort: String) async { // async kann begonnen, pausiert und später fortgesetzt werden. await muss verwendet werden, bis Ergebnis verfügbar ist. Verwendet, weil Netzwerkaufruf Zeit braucht
-        fehlermeldung = nil // Anmeldung nicht fehlgeschlagen
+        fehlermeldung = nil                         // Anmeldung nicht fehlgeschlagen
         do {
             let antwort = try await api.anmelden(firmenID: firmenID, benutzername: benutzername, passwort: passwort) // Aufruf ist async throws, weil Anfrage warten muss und Fehler auftreten können
             Schluesselbund.speichern(antwort.token) // token wird im Schlüsselbund gespeichert
-            token = antwort.token   // token wird published. Weil das im @MainActor passiert geschieht das im Hauptthread und löst Update im UI aus
-        } catch { // Fehlerbehandlung
+            token = antwort.token                   // token wird published. Weil das im @MainActor passiert geschieht das im Hauptthread und löst Update im UI aus
+        } catch {                                   // Fehlerbehandlung
             fehlermeldung = (error as? LocalizedError)?.errorDescription ?? "Login fehlgeschlagen" // Mit fehlermeldung und token kann UI aktuallisiert werden
         }
     }
