@@ -12,7 +12,7 @@ struct Detail: View {
     @Environment(\.modelContext) var modelContext
     @Environment(\.dismiss) private var dismiss
     
-    // Die Variablen werden nur hier verwendet (Daher auch private var). Sie werden in Zeile 76 mit den Init-Werten aus der class Item gefüllt. Bei Bestätigung in Zeile 103-122 werden die Werte in die Variablen von der class Item geschrieben und gespeichert. Eine ID wird automatisch generiert und muss daher nicht in ContentView.swift Zeile 16 zugewiesen werden.
+    // Die Variablen werden nur hier verwendet(daher auch private var). Sie werden in Zeile 73 mit den Init-Werten aus der class Item gefüllt. Bei Bestätigung in Zeile 103-122 werden die Werte in die Variablen von der class Item geschrieben und gespeichert. Eine ID wird automatisch generiert und muss daher nicht in ContentView.swift Zeile 16 zugewiesen werden.
     @Bindable var      item:            Item             // Übergebe class an @State var item
     @State private var itemname:        String = ""      // Variable für die Artikelbezeichnung
     @State private var itemnumber:      String = ""      // Variable für die Artikelnummer
@@ -21,6 +21,7 @@ struct Detail: View {
     @State private var minQuantity:     String = ""      // Variable für den Meldebestand
     @State private var orderdIsOn:      Bool   = false   // Variable für den Schaltzustand vom Toggle Bestellt
     @State private var location:        String = ""      // Variable für den Lagerort
+    @State private var presentInspector:Bool   = false   // Variabel für den Schaltzustand vom Inspector
     
     public var body: some View {
         List {
@@ -30,21 +31,21 @@ struct Detail: View {
             }
             Section {
                 HStack {
-                    Text("Anzahl")
+                    Text("Anzahl")  // inspector
                     Spacer()
                     HStack(spacing: 8) {
-                        TextField("0", text: $quantity)
+                        TextField("", text: $quantity)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
                         Image(systemName: "chevron.right")
-                            .foregroundStyle(.secondary)
                     }
+                    .foregroundStyle(.secondary)
                 }
                 Toggle("Meldebestand", isOn: $minQuantityIsOn)
                 if minQuantityIsOn {  // Das Textfeld wird ausgeblendet, wenn der Toggle inaktiv ist
                     HStack(spacing: 8) {
                         Spacer()
-                        TextField("0", text: $minQuantity)
+                        TextField("", text: $minQuantity)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
                         Image(systemName: "chevron.right")
@@ -59,7 +60,7 @@ struct Detail: View {
                     Text("Lagerort")
                     Spacer()
                     HStack(spacing: 8) {
-                        TextField("0", text: $location)
+                        TextField("", text: $location)
                             .multilineTextAlignment(.trailing)
                         Spacer()
                     }
