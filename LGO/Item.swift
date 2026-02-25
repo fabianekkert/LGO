@@ -1,7 +1,7 @@
-//  Item.swift
-//  LGO
-//  Created by Fabian on 09.02.26.
-//  In dieser Datei wird die class angelegt, welche als Vorlage für die Artikel verwendet wird. Auf die einzelnen Positionen kann man mit Item."variablen name" zugreifen. Zeile 22-32 dienen nur zur Initialisierung
+///  Item.swift
+///  LGO
+///  Created by Fabian on 09.02.26.
+///  In dieser Datei wird die class angelegt, welche als Vorlage für die Artikel verwendet wird. Auf die einzelnen Positionen kann man mit Item."variablen name" zugreifen. Zeile 22-32 dienen nur zur Initialisierung
 
 import SwiftData
 

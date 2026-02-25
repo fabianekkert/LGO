@@ -1,6 +1,6 @@
-//  ContentView.swift
-//  LGO
-//  Created by Fabian on 09.02.26.
+///  ContentView.swift
+///  LGO
+///  Created by Fabian on 09.02.26.
 
 import CodeScanner
 import SwiftUI
@@ -10,12 +10,20 @@ import AVFoundation
 struct ContentView: View {
     @Query var items: [Item]
     @Environment(\.modelContext) var modelContext
-    @State private var searchText = ""
-    @State private var sheetIsPresented      = false
-    @State private var isShowingScanner      = false
-    @State private var scannedItem: Item? // Speichert das gescannte Item (entweder gefunden oder neu erstellt)
-    @State private var showScannedItemDetail = false // Steuert, ob die Detailansicht nach dem Scannen angezeigt werden soll
-
+    @State private var scannedItem: Item?
+    @State private var searchText              = ""
+    @State private var sheetIsPresented        = false
+    @State private var isShowingScanner        = false
+    @State private var showScannedItemDetail   = false
+    @State private var isSearchFieldExpanded   = false
+    @State private var currentSort: SortOption = .alphabetical
+    
+    /// Sortier-Optionen
+    enum SortOption: String, CaseIterable {
+        case alphabetical = "Alphabetisch"
+        case byNumber     = "Nach Artikelnummer"
+    }
+    /// Artikellabel in der Liste
     private struct ItemRow: View {
         let item: Item
         var body: some View {
@@ -49,7 +57,7 @@ struct ContentView: View {
             }
         }
     }
-
+    /// Suchfunktion
     private var filteredItems: [Item] {
         guard !searchText.isEmpty else { return items }
         return items.filter {
@@ -57,128 +65,247 @@ struct ContentView: View {
             || String(describing: $0.itemnumber).localizedCaseInsensitiveContains(searchText)
         }
     }
-    
-    private var visibleItems: [Item] { filteredItems }
-    
+    /// Sortierfunktion
+    private var sortedItems: [Item] {
+        switch currentSort {
+        case .alphabetical:
+            return filteredItems.sorted { $0.itemname.localizedCompare($1.itemname) == .orderedAscending }
+        case .byNumber:
+            return filteredItems.sorted { $0.itemnumber < $1.itemnumber }
+        }
+    }
+    /// Section Bedingung
+    private var criticalItems: [Item] {
+        sortedItems.filter { $0.minQuantityIsOn && $0.quantity <= $0.minQuantity }
+    }
+    private var orderedItems: [Item] {
+        sortedItems.filter { $0.orderdIsOn && !($0.minQuantityIsOn && $0.quantity <= $0.minQuantity) }
+    }
+    private var normalItems: [Item] {
+        sortedItems.filter { !$0.orderdIsOn && !($0.minQuantityIsOn && $0.quantity <= $0.minQuantity) }
+    }
+    /// Anzeige nach Sortierung
+    private var visibleItems: [Item] { sortedItems }
+    /// Ansicht
     var body: some View {
         NavigationStack {
-            ZStack(alignment: .bottomTrailing) {
-                List {
-                    ForEach(visibleItems) { item in
-                        NavigationLink {
-                            Detail(item: item)
-                        } label: {
-                            ItemRow(item: item)
-                        }
-                        .swipeActions {
-                            Button ("Delete", role: .destructive) {
-                                modelContext.delete(item)
-                                guard let _ = try? modelContext.save() else {
-                                    print("ERROR: Save after .delete did not work.")
-                                    return
+            List {
+                /// Section für unter Meldebestand
+                if !criticalItems.isEmpty {
+                    Section {
+                        ForEach(criticalItems) { item in
+                            NavigationLink {
+                                Detail(item: item)
+                            } label: {
+                                ItemRow(item: item)
+                            }
+                            .swipeActions {
+                                Button ("Delete", role: .destructive) {
+                                    modelContext.delete(item)
+                                    guard let _ = try? modelContext.save() else {
+                                        print("ERROR: Save after .delete did not work.")
+                                        return
+                                    }
                                 }
                             }
                         }
                     }
                 }
-                .scrollContentBackground(.hidden)
-                .overlay {
-                    if visibleItems.isEmpty {
-                        ContentUnavailableView(
-                            "Keine Artikel",
-                            systemImage: "shippingbox",
-                            description: Text("Lege einen neuen Artikel an.")
-                        )
+                /// Section für Bestellt
+                if !orderedItems.isEmpty {
+                    Section {
+                        ForEach(orderedItems) { item in
+                            NavigationLink {
+                                Detail(item: item)
+                            } label: {
+                                ItemRow(item: item)
+                            }
+                            .swipeActions {
+                                Button ("Delete", role: .destructive) {
+                                    modelContext.delete(item)
+                                    guard let _ = try? modelContext.save() else {
+                                        print("ERROR: Save after .delete did not work.")
+                                        return
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
-                .listStyle(.automatic)
-                .safeAreaInset(edge: .bottom) {
-                    Color.clear.frame(height: 70)
+                /// Section für Lagerbestand "normal"
+                if !normalItems.isEmpty {
+                    Section {
+                        ForEach(normalItems) { item in
+                            NavigationLink {
+                                Detail(item: item)
+                            } label: {
+                                ItemRow(item: item)
+                            }
+                            .swipeActions {
+                                Button ("Delete", role: .destructive) {
+                                    modelContext.delete(item)
+                                    guard let _ = try? modelContext.save() else {
+                                        print("ERROR: Save after .delete did not work.")
+                                        return
+                                    }
+                                }
+                            }
+                            .onAppear {
+                                if item.id == normalItems.first?.id {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        isSearchFieldExpanded = false
+                                    }
+                                }
+                            }
+                            .onDisappear {
+                                if item.id == normalItems.first?.id {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        isSearchFieldExpanded = false
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
-                Button {
-                    isShowingScanner = true
-                } label: {
-                    Image(systemName: "qrcode.viewfinder")
-                        .font(.title2)
-                        .imageScale(.large)
-                        .frame(width: 30, height: 40)
-                        .foregroundStyle(.black)
-                    
-                }
-                .buttonStyle(.bordered)
-                .buttonBorderShape(.circle)
-                .glassEffect()
-                .padding(.trailing, 28)
-                .padding(.bottom, 4)
-                .shadow(color: .black.opacity(0.02), radius: 8, x: 0, y: 4)
-                .sheet(isPresented: $isShowingScanner) {
-                    CodeScannerView(
-                        codeTypes: [.qr],
-                        simulatedData: "Porsche 911",
-                        completion: handleScan
+            }
+            .scrollContentBackground(.hidden)
+            .overlay {  /// Wenn Liste Leer
+                if visibleItems.isEmpty {
+                    ContentUnavailableView(
+                        "Keine Artikel",
+                        systemImage: "shippingbox",
+                        description: Text("Lege einen neuen Artikel an.")
                     )
                 }
-                
             }
-            .sheet(isPresented: $sheetIsPresented) {
+            .listStyle(.automatic)
+            .sheet(isPresented: $sheetIsPresented) {    /// Sheet für neuen Artikel
                 NavigationStack{
                     Detail(item: Item())
                         .navigationTitle("Neuer Artikel")
                         .navigationBarTitleDisplayMode(.inline)
                 }
             }
+            .sheet(isPresented: $isShowingScanner) {    /// Sheet für Scanneransicht
+                CodeScannerView(
+                    codeTypes: [.qr],
+                    simulatedData: "Porsche 911",
+                    completion: handleScan
+                )
+            }
             .navigationTitle("Lager")
             .navigationBarTitleDisplayMode(.automatic)
             .navigationSubtitle(Text("\(visibleItems.count) " + (visibleItems.count == 1 ? "Eintrag" : "Einträge")))
-            .searchable(text: $searchText, placement: .automatic)
-            .searchToolbarBehavior(.minimize)
 #if os(macOS)
             .navigationSplitViewColumnWidth(min: 180, ideal: 200)
 #endif
             .toolbar {
 #if os(iOS)
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {   /// Item hinzufügen
                     Button {
                         sheetIsPresented.toggle()
                     } label: {
                         Image (systemName: "plus")
                     }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {   /// Menü
                     Menu {
                         NavigationLink {
                             Settings()
                         } label: {
                             Label("Einstellungen", systemImage: "gear")
                         }
+                        Divider()
+                        Section("Sortieren") {
+                            ForEach(SortOption.allCases, id: \.self) { option in
+                                Button {
+                                    currentSort = option
+                                } label: {
+                                    HStack {
+                                        Text(option.rawValue)
+                                        Spacer()
+                                        if currentSort == option {
+                                            Image(systemName: "checkmark")
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     } label: {
                         Label("Menü", systemImage: "ellipsis")
+                    }
+                }
+                
+                ToolbarItem(placement: .bottomBar) {    /// Damit rechtsbündig
+                    Spacer()
+                }
+                ToolbarItem(placement: .bottomBar) {    /// Suchfunktion
+                    if isSearchFieldExpanded || !searchText.isEmpty {
+                        HStack(spacing: 6) {
+                            Image(systemName: "magnifyingglass")
+                                .foregroundStyle(.secondary)
+                                .font(.subheadline)
+                            
+                            TextField("Suchen", text: $searchText)
+                                .textFieldStyle(.plain)
+                                .frame(width: 235)
+                            
+                            if !searchText.isEmpty {
+                                Button {
+                                    searchText = ""
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundStyle(.secondary)
+                                        .font(.subheadline)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 6)
+                        .cornerRadius(10)
+                        .transition(.scale.combined(with: .opacity))
+                        
+                    } else {
+                        Button {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                isSearchFieldExpanded = true
+                            }
+                        } label: {
+                            Label("Suchen", systemImage: "magnifyingglass")
+                        }
+                        .transition(.scale.combined(with: .opacity))
+                    }
+                }
+                ToolbarItem(placement: .bottomBar) {    /// QR Funktion
+                    Button {
+                        isShowingScanner = true
+                    } label: {
+                        Label("QR Scan", systemImage: "qrcode.viewfinder")
                     }
                 }
                 
 #endif
                 
             }
-            .background(Color(UIColor { trait in
+            .background(Color(UIColor { trait in    /// Hintergrund von den Listen in Light- und Dark Mode
                 trait.userInterfaceStyle == .dark
                 ? UIColor.systemBackground
                 : UIColor.systemGray6
             }))
-            .navigationDestination(isPresented: $showScannedItemDetail) {
+            .navigationDestination(isPresented: $showScannedItemDetail) {   /// Navigiert zum gescannten Item zur bearbeitung
                 if let item = scannedItem {
                     Detail(item: item)
                 }
             }
         }
     }
-    
-    func handleScan(result: Result<ScanResult,ScanError>) {
+    func handleScan(result: Result<ScanResult,ScanError>) {     /// Scannereinstellungen und vergleich mit den Einträgen aus der Liste
         isShowingScanner = false
         
         switch result {
         case .success(let result):
             let scanned = result.string.components(separatedBy: " ")
-            
             guard scanned.count == 2 else { return }
             
             let scannedName = scanned[0]

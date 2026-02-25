@@ -1,6 +1,6 @@
-//  LGOApp.swift
-//  LGO
-//  Created by Fabian on 09.02.26.
+///  LGOApp.swift
+///  LGO
+///  Created by Fabian on 09.02.26.
 
 import SwiftUI
 import SwiftData
@@ -34,7 +34,7 @@ struct LG0App: App {
             }
             .onChange(of: scenePhase) { oldPhase, newPhase in
                 if newPhase == .background {
-                    // App geht in den Hintergrund → hier abmelden
+                    /// App geht in den Hintergrund → hier abmelden
                     auth.abmelden()
                 }
             }
