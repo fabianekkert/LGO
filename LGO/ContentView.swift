@@ -99,15 +99,6 @@ struct ContentView: View {
                             } label: {
                                 ItemRow(item: item)
                             }
-                            .swipeActions {
-                                Button ("Delete", role: .destructive) {
-                                    modelContext.delete(item)
-                                    guard let _ = try? modelContext.save() else {
-                                        print("ERROR: Save after .delete did not work.")
-                                        return
-                                    }
-                                }
-                            }
                         }
                     }
                 }
@@ -120,15 +111,6 @@ struct ContentView: View {
                             } label: {
                                 ItemRow(item: item)
                             }
-                            .swipeActions {
-                                Button ("Delete", role: .destructive) {
-                                    modelContext.delete(item)
-                                    guard let _ = try? modelContext.save() else {
-                                        print("ERROR: Save after .delete did not work.")
-                                        return
-                                    }
-                                }
-                            }
                         }
                     }
                 }
@@ -140,15 +122,6 @@ struct ContentView: View {
                                 Detail(item: item)
                             } label: {
                                 ItemRow(item: item)
-                            }
-                            .swipeActions {
-                                Button ("Delete", role: .destructive) {
-                                    modelContext.delete(item)
-                                    guard let _ = try? modelContext.save() else {
-                                        print("ERROR: Save after .delete did not work.")
-                                        return
-                                    }
-                                }
                             }
                             .onAppear {
                                 if item.id == normalItems.first?.id {

@@ -23,6 +23,7 @@ struct Detail: View {
     @State private var minQuantity:     String = ""      /// Meldebestand
     @State private var orderdIsOn:      Bool   = false   /// Toggle Bestellt
     @State private var location:        String = ""      /// Lagerort
+    @State private var showDeleteConfirmation: Bool = false /// Bestätigungsdialog für Löschen
     
     public var body: some View {
         List {
@@ -36,10 +37,12 @@ struct Detail: View {
                     Spacer()
                     Button {
                         let currentValue = Int(quantity) ?? 0
-                        quantity = String(currentValue + 1)
+                        if currentValue > 0 {
+                            quantity = String(currentValue - 1)
+                        }
                     } label: {
-                        Image(systemName: "plus.circle.fill")
-                            .foregroundStyle(Color.green)
+                        Image(systemName: "minus.circle.fill")
+                            .foregroundStyle(Color.red)
                             .font(.title2)
                     }
                     .buttonStyle(.plain)
@@ -52,12 +55,10 @@ struct Detail: View {
                         .clipShape(RoundedRectangle(cornerRadius: 15))
                     Button {
                         let currentValue = Int(quantity) ?? 0
-                        if currentValue > 0 {
-                            quantity = String(currentValue - 1)
-                        }
+                        quantity = String(currentValue + 1)
                     } label: {
-                        Image(systemName: "minus.circle.fill")
-                            .foregroundStyle(Color.red)
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundStyle(Color.green)
                             .font(.title2)
                     }
                     .buttonStyle(.plain)
@@ -73,10 +74,12 @@ struct Detail: View {
                         Spacer()
                         Button {
                             let currentValue = Int(minQuantity) ?? 0
-                            minQuantity = String(currentValue + 1)
+                            if currentValue > 0 {
+                                minQuantity = String(currentValue - 1)
+                            }
                         } label: {
-                            Image(systemName: "plus.circle.fill")
-                                .foregroundStyle(Color.green)
+                            Image(systemName: "minus.circle.fill")
+                                .foregroundStyle(Color.secondary)
                                 .font(.title2)
                         }
                         .buttonStyle(.plain)
@@ -89,12 +92,10 @@ struct Detail: View {
                             .clipShape(RoundedRectangle(cornerRadius: 15))
                         Button {
                             let currentValue = Int(minQuantity) ?? 0
-                            if currentValue > 0 {
-                                minQuantity = String(currentValue - 1)
-                            }
+                            minQuantity = String(currentValue + 1)
                         } label: {
-                            Image(systemName: "minus.circle.fill")
-                                .foregroundStyle(Color.red)
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundStyle(Color.secondary)
                                 .font(.title2)
                         }
                         .buttonStyle(.plain)
@@ -164,8 +165,56 @@ struct Detail: View {
                     Image(systemName: "checkmark")
                 }
             }
+            ToolbarItem(placement: .bottomBar) {
+                Button {
+                    showDeleteConfirmation = true
+                } label: {
+                    Text("Artikel löschen")
+                        .foregroundStyle(.red)
+                }
+                .frame(width: 280)
+            }
             
 #endif
+        }
+        .overlay {
+            if showDeleteConfirmation {
+                ZStack {
+                    Color.black.opacity(0.0)
+                        .ignoresSafeArea()
+                        .onTapGesture {
+                            showDeleteConfirmation = false
+                        }
+                    VStack {
+                        Text("Bist du sicher, dass du diesen Artikel löschen möchtest?")
+                            .multilineTextAlignment(.leading)
+                            .padding(15)
+                        Button {
+                            modelContext.delete(item)
+                            guard let _ = try? modelContext.save() else {
+                                print("ERROR: Delete on Detail did not work")
+                                return
+                            }
+                            showDeleteConfirmation = false
+                            dismiss()
+                        } label: {
+                            Text("Löschen")
+                                .frame(width: 160)
+                                .padding(.vertical, 12)
+                                .foregroundStyle(.white)
+                        }
+                        .background(Color.red)
+                        .clipShape(RoundedRectangle(cornerRadius: 25))
+                        .padding(15)
+                    }
+                    .frame(width: 270, height: 160)
+                    .background(Color(UIColor.systemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 30))
+                    .shadow(radius: 20)
+                }
+                .transition(.opacity)
+                .animation(.easeInOut(duration: 0.2), value: showDeleteConfirmation)
+            }
         }
     }
 }
