@@ -15,7 +15,7 @@ struct ContentView: View {
     @State private var sheetIsPresented        = false
     @State private var isShowingScanner        = false
     @State private var showScannedItemDetail   = false
-    @State private var isSearchFieldExpanded   = false
+    @State private var isSearchFieldExpanded   = true
     @State private var currentSort: SortOption = .alphabetical
     
     /// Sortier-Optionen
@@ -76,10 +76,10 @@ struct ContentView: View {
     }
     /// Section Bedingung
     private var criticalItems: [Item] {
-        sortedItems.filter { $0.minQuantityIsOn && $0.quantity <= $0.minQuantity }
+        sortedItems.filter { !$0.orderdIsOn && $0.minQuantityIsOn && $0.quantity <= $0.minQuantity }
     }
     private var orderedItems: [Item] {
-        sortedItems.filter { $0.orderdIsOn && !($0.minQuantityIsOn && $0.quantity <= $0.minQuantity) }
+        sortedItems.filter { $0.orderdIsOn }
     }
     private var normalItems: [Item] {
         sortedItems.filter { !$0.orderdIsOn && !($0.minQuantityIsOn && $0.quantity <= $0.minQuantity) }
@@ -92,7 +92,7 @@ struct ContentView: View {
             List {
                 /// Section für unter Meldebestand
                 if !criticalItems.isEmpty {
-                    Section {
+                    Section(header: Text("Unter Meldebestand").font(.subheadline)) {
                         ForEach(criticalItems) { item in
                             NavigationLink {
                                 Detail(item: item)
@@ -104,7 +104,7 @@ struct ContentView: View {
                 }
                 /// Section für Bestellt
                 if !orderedItems.isEmpty {
-                    Section {
+                    Section(header: Text("Bestellt").font(.subheadline)) {
                         ForEach(orderedItems) { item in
                             NavigationLink {
                                 Detail(item: item)
@@ -116,26 +116,12 @@ struct ContentView: View {
                 }
                 /// Section für Lagerbestand "normal"
                 if !normalItems.isEmpty {
-                    Section {
+                    Section(header: Text("Lagerbestand").font(.subheadline)) {
                         ForEach(normalItems) { item in
                             NavigationLink {
                                 Detail(item: item)
                             } label: {
                                 ItemRow(item: item)
-                            }
-                            .onAppear {
-                                if item.id == normalItems.first?.id {
-                                    withAnimation(.easeInOut(duration: 0.2)) {
-                                        isSearchFieldExpanded = false
-                                    }
-                                }
-                            }
-                            .onDisappear {
-                                if item.id == normalItems.first?.id {
-                                    withAnimation(.easeInOut(duration: 0.2)) {
-                                        isSearchFieldExpanded = false
-                                    }
-                                }
                             }
                         }
                     }
@@ -162,7 +148,7 @@ struct ContentView: View {
             .sheet(isPresented: $isShowingScanner) {    /// Sheet für Scanneransicht
                 CodeScannerView(
                     codeTypes: [.qr],
-                    simulatedData: "Porsche 911",
+                    simulatedData: "Schraube M10",
                     completion: handleScan
                 )
             }
@@ -209,10 +195,7 @@ struct ContentView: View {
                     }
                 }
                 
-                ToolbarItem(placement: .bottomBar) {    /// Damit rechtsbündig
-                    Spacer()
-                }
-                ToolbarItem(placement: .bottomBar) {    /// Suchfunktion
+                ToolbarItem(placement: .bottomBar) {    /// Suchfunktion (links)
                     if isSearchFieldExpanded || !searchText.isEmpty {
                         HStack(spacing: 6) {
                             Image(systemName: "magnifyingglass")
@@ -250,7 +233,10 @@ struct ContentView: View {
                         .transition(.scale.combined(with: .opacity))
                     }
                 }
-                ToolbarItem(placement: .bottomBar) {    /// QR Funktion
+                ToolbarItem(placement: .bottomBar) {    /// Spacer für Trennung
+                    Spacer()
+                }
+                ToolbarItem(placement: .bottomBar) {    /// QR Funktion (rechts)
                     Button {
                         isShowingScanner = true
                     } label: {

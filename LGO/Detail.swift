@@ -21,11 +21,13 @@ struct Detail: View {
     @State private var quantity:        String = ""      /// Anzahl
     @State private var minQuantityIsOn: Bool   = false   /// Toggle Meldebestand
     @State private var minQuantity:     String = ""      /// Meldebestand
+    @State private var minQuantityExpanded: Bool = false /// Meldebestand aufgeklappt
     @State private var orderdIsOn:      Bool   = false   /// Toggle Bestellt
     @State private var location:        String = ""      /// Lagerort
     @State private var showDeleteConfirmation: Bool = false /// Bestätigungsdialog für Löschen
     
     public var body: some View {
+        ZStack {
         List {
             Section {
                 TextField("Artikelbezeichnung", text: $itemname)
@@ -63,26 +65,46 @@ struct Detail: View {
                     }
                     .buttonStyle(.plain)
                 }
-                Toggle("Bestellt", isOn: $orderdIsOn)
+                    Toggle("Bestellt", isOn: $orderdIsOn)
             }
             Section {
-                Toggle("Meldebestand", isOn: $minQuantityIsOn)
-                if minQuantityIsOn {  /// Das Textfeld wird ausgeblendet, wenn der Toggle inaktiv ist
+                Button {
+                    withAnimation {
+                        minQuantityExpanded.toggle()
+                    }
+                } label: {
                     HStack {
-                        Text("")  /// Unsichtbarer Platzhalter für korrekte Ausrichtung
-                            .frame(width: 0)
+                        Text("Meldebestand")
+                            .foregroundStyle(.primary)
+                        
+                        Image(systemName: "chevron.down")
+                            .foregroundStyle(.secondary)
+                            .rotationEffect(.degrees(minQuantityExpanded ? 180 : 0))
+                        Spacer()
+                        Toggle("Aktiv", isOn: $minQuantityIsOn)
+                            .labelsHidden()
+                        
+                    }
+                }
+                .buttonStyle(.plain)
+                
+                if minQuantityExpanded {
+                    HStack {
                         Spacer()
                         Button {
-                            let currentValue = Int(minQuantity) ?? 0
-                            if currentValue > 0 {
-                                minQuantity = String(currentValue - 1)
+                            if minQuantityIsOn {
+                                let currentValue = Int(minQuantity) ?? 0
+                                if currentValue > 0 {
+                                    minQuantity = String(currentValue - 1)
+                                }
                             }
                         } label: {
                             Image(systemName: "minus.circle.fill")
-                                .foregroundStyle(Color.secondary)
+                                .foregroundStyle(minQuantityIsOn ? Color.red : Color.gray)
                                 .font(.title2)
                         }
                         .buttonStyle(.plain)
+                        .disabled(!minQuantityIsOn)
                         TextField("0", text: $minQuantity)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.center)
@@ -90,15 +112,19 @@ struct Detail: View {
                             .padding(.vertical, 2)
                             .background(Color.secondary.opacity(0.15))
                             .clipShape(RoundedRectangle(cornerRadius: 15))
+                            .disabled(!minQuantityIsOn)
                         Button {
-                            let currentValue = Int(minQuantity) ?? 0
-                            minQuantity = String(currentValue + 1)
+                            if minQuantityIsOn {
+                                let currentValue = Int(minQuantity) ?? 0
+                                minQuantity = String(currentValue + 1)
+                            }
                         } label: {
                             Image(systemName: "plus.circle.fill")
-                                .foregroundStyle(Color.secondary)
+                                .foregroundStyle(minQuantityIsOn ? Color.green : Color.gray)
                                 .font(.title2)
                         }
                         .buttonStyle(.plain)
+                        .disabled(!minQuantityIsOn)
                     }
                 }
             }
@@ -112,13 +138,19 @@ struct Detail: View {
                         Spacer()
                     }
                 }
-                if !location.isEmpty {
-                    Image("Map")
-                        .resizable()
-                        .scaledToFit()
-                        .listRowInsets(EdgeInsets())
+                MapView(location: location)
+                    .listRowInsets(EdgeInsets())
+            }
+            Section {
+                Button {
+                    showDeleteConfirmation = true
+                } label: {
+                    Text("Artikel löschen")
+                        .frame(maxWidth: .infinity)
+                        .foregroundStyle(.red)
                 }
             }
+        }
         }
         .onAppear() {
             itemname = item.itemname
@@ -165,57 +197,67 @@ struct Detail: View {
                     Image(systemName: "checkmark")
                 }
             }
-            ToolbarItem(placement: .bottomBar) {
-                Button {
-                    showDeleteConfirmation = true
-                } label: {
-                    Text("Artikel löschen")
-                        .foregroundStyle(.red)
-                }
-                .frame(width: 280)
-            }
             
 #endif
         }
         .overlay {
             if showDeleteConfirmation {
                 ZStack {
-                    Color.black.opacity(0.0)
+                    Color.black.opacity(0.1)
                         .ignoresSafeArea()
                         .onTapGesture {
                             showDeleteConfirmation = false
                         }
-                    VStack {
+                    VStack(spacing: 10) {
                         Text("Bist du sicher, dass du diesen Artikel löschen möchtest?")
-                            .multilineTextAlignment(.leading)
-                            .padding(15)
-                        Button {
-                            modelContext.delete(item)
-                            guard let _ = try? modelContext.save() else {
-                                print("ERROR: Delete on Detail did not work")
-                                return
+                            .multilineTextAlignment(.center)
+                            .padding(.top, 20)
+                            .padding(.horizontal, 20)
+                        
+                        Spacer()
+                        
+                        VStack(spacing: 10) {
+                            Button {
+                                modelContext.delete(item)
+                                guard let _ = try? modelContext.save() else {
+                                    print("ERROR: Delete on Detail did not work")
+                                    return
+                                }
+                                showDeleteConfirmation = false
+                                dismiss()
+                            } label: {
+                                Text("Löschen")
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .foregroundStyle(.white)
                             }
-                            showDeleteConfirmation = false
-                            dismiss()
-                        } label: {
-                            Text("Löschen")
-                                .frame(width: 160)
-                                .padding(.vertical, 12)
-                                .foregroundStyle(.white)
+                            .background(Color.red)
+                            .clipShape(RoundedRectangle(cornerRadius: 25))
+                            
+                            Button {
+                                showDeleteConfirmation = false
+                            } label: {
+                                Text("Abbrechen")
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .foregroundStyle(.primary)
+                            }
+                            .background(.regularMaterial)
+                            .clipShape(RoundedRectangle(cornerRadius: 25))
                         }
-                        .background(Color.red)
-                        .clipShape(RoundedRectangle(cornerRadius: 25))
-                        .padding(15)
+                        .padding(.horizontal, 15)
+                        .padding(.bottom, 15)
                     }
-                    .frame(width: 270, height: 160)
-                    .background(Color(UIColor.systemBackground))
+                    .frame(width: 270, height: 210)
+                    .background(.regularMaterial)
                     .clipShape(RoundedRectangle(cornerRadius: 30))
-                    .shadow(radius: 20)
+                    .shadow(radius: 10)
                 }
                 .transition(.opacity)
                 .animation(.easeInOut(duration: 0.2), value: showDeleteConfirmation)
             }
         }
+        
     }
 }
 
