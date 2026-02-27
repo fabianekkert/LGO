@@ -1,7 +1,7 @@
-//  Login.swift
-//  LGO
-//  Created by Fabian on 12.02.26.
-//  In dieser Datei wird der LoginScreen beschrieben.
+///  Login.swift
+///  LGO
+///  Created by Fabian on 12.02.26.
+///  In dieser Datei wird der LoginScreen beschrieben.
 
 import SwiftUI
 import SwiftData
@@ -26,7 +26,7 @@ struct Login: View {
                 VStack{
                     Text("Login")
                         .font(Font.largeTitle.bold())
-                    TextField("Firmen ID", text: $companyid)    // FirmenID wird in @State private var companyid geschrieben
+                    TextField("Firmen ID", text: $companyid)    /// FirmenID wird in @State private var companyid geschrieben
                         .multilineTextAlignment(.center)
                         .textContentType(.username)
                         .autocorrectionDisabled(true)
@@ -35,7 +35,7 @@ struct Login: View {
                         .overlay(RoundedRectangle(cornerRadius: 12).stroke(.secondary, lineWidth: 1))
                         .frame(width: 300)
                     Spacer().frame(height: 12)
-                    TextField("Nutzername", text: $username)    // Nutzername wird in @State private var username geschrieben
+                    TextField("Nutzername", text: $username)    /// Nutzername wird in @State private var username geschrieben
                         .multilineTextAlignment(.center)
                         .textContentType(.username)
                         .autocorrectionDisabled(true)
@@ -45,14 +45,14 @@ struct Login: View {
                         .frame(width: 300)
                     Spacer().frame(height: 12)
                     ZStack {
-                        Group {                                 // Als Gruppe, weil nur einer von beiden angezeigt werden soll
-                            if isPasswordVisible {              // Togglezustand (Per Default als nicht sichtbar)
-                                TextField("Passwort", text: $passwort)          // Passwort wird in @State private var passwort geschrieben
+                        Group {   /// Als Gruppe, weil nur einer von beiden angezeigt werden soll
+                            if isPasswordVisible {    /// Togglezustand (Per Default als nicht sichtbar)
+                                TextField("Passwort", text: $passwort)          /// Passwort wird in @State private var passwort geschrieben
                                     .textContentType(.password)
                                     .autocorrectionDisabled(true)
                                     .autocapitalization(.none)
                             } else {
-                                SecureField("Passwort", text: $passwort)        // Passwort wird in @State private var passwort geschrieben
+                                SecureField("Passwort", text: $passwort)   /// Passwort wird in @State private var passwort geschrieben
                                     .textContentType(.password)
                                     .autocorrectionDisabled(true)
                                     .autocapitalization(.none)
@@ -61,7 +61,7 @@ struct Login: View {
                         .multilineTextAlignment(.center)
                         HStack {
                             Spacer()
-                            Button(action: { isPasswordVisible.toggle() }) {    // Toggle für die Passwortanzeige: Änderd Zustand in Zeile 49-59 (if else)
+                            Button(action: { isPasswordVisible.toggle() }) {    /// Toggle für die Passwortanzeige: Änderd Zustand in Zeile 49-59 (if else)
                                 Image(systemName: isPasswordVisible ? "eye.slash" : "eye")
                             }
                             .buttonStyle(.plain)
@@ -71,10 +71,10 @@ struct Login: View {
                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(.secondary, lineWidth: 1))
                     .frame(width: 300)
                     
-                    if istLaden {                                               // ProgressView startet automatisch, wenn istLaden auf true geschaltet wird
+                    if istLaden {   /// ProgressView startet automatisch, wenn istLaden auf true geschaltet wird
                         ProgressView().padding(.top, 10)
                     }
-                    if let fehlertext {                                         // Fehlertext hat den Wert "nil". Die Variable wird in Zeile 92 mit dem Fehlertext gefüllt und aus Zeile 105 geprintet
+                    if let fehlertext {   /// Fehlertext hat den Wert "nil". Die Variable wird in Zeile 92 mit dem Fehlertext gefüllt und aus Zeile 105 geprintet
                         Text(fehlertext)
                             .foregroundColor(.red)
                             .padding(.top, 8)
@@ -88,7 +88,7 @@ struct Login: View {
         .toolbar {
             ToolbarItem(placement: .bottomBar) {
                 Button {
-                    Task {                                                       // passiert alles, wenn die Schaltfläche betätigt wird.
+                    Task {    /// passiert alles, wenn die Schaltfläche betätigt wird.
                         fehlertext = nil
                         istLaden = true
                         
@@ -98,8 +98,8 @@ struct Login: View {
                         print(" Login startet...")
                         
                         dismiss()
-                        await auth.anmelden(firmenID: companyid, benutzername: username, passwort: passwort) // Siehe Communikation Zeile 130-139
-                        istLaden = false                                          // Durch Wertänderung wird ProgressView gestartet.
+                        await auth.anmelden(firmenID: companyid, benutzername: username, passwort: passwort) /// Siehe Communikation Zeile 130-139
+                        istLaden = false   /// Durch Wertänderung wird ProgressView gestartet.
                         
                         if auth.token != nil {
                             print("Login OK - Token erhalten")
@@ -112,14 +112,13 @@ struct Login: View {
                 } label: {
                     Text("Weiter")
                 }
-                .frame(maxWidth: .infinity)
+                .frame(width: 280)
                 .disabled(companyid.isEmpty || username.isEmpty || passwort.isEmpty || istLaden)
             }
         }
     }
 }
 
-// Funktion um die Preview zu ermöglichen
 #Preview {
     NavigationStack {
         Login()

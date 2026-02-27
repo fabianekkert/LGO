@@ -1,6 +1,6 @@
-//  File.swift
-//  LGO
-//  Created by Fabian on 10.02.26.
+///  File.swift
+///  LGO
+///  Created by Fabian on 10.02.26.
 
 import Foundation
 import Security
@@ -8,7 +8,7 @@ import SwiftUI
 import Combine
 import SwiftData
 
-// Modelle - werden im Abschnitt Authentifizierung abgefragt
+/// Modelle - werden im Abschnitt Authentifizierung abgefragt
 struct LoginAnfrage: Codable {
     let firmen_id:    String
     let benutzername: String
@@ -28,13 +28,13 @@ struct Artikel: Codable, Identifiable {
     let meldebestand:  Int
     let lagerort:      String
 }
-// Schlüsselbund um die Token zu Speichern
+/// Schlüsselbund um die Token zu Speichern
 enum Schluesselbund {
     private static let service = "com.deineapp.lager"
     private static let account = "token"
 
     static func speichern(_ token: String) {
-        let daten = Data(token.utf8)    // Wandelt den token String mit UTF-8 zu Data um.
+        let daten = Data(token.utf8)    /// Wandelt den token String mit UTF-8 zu Data um.
         SecItemDelete([
             kSecClass:       kSecClassGenericPassword,
             kSecAttrService: service,
@@ -68,7 +68,7 @@ enum Schluesselbund {
         ] as CFDictionary)
     }
 }
-// API Client
+/// API Client
 enum NetzwerkFehler: LocalizedError {
     case http(Int)
     case decode
@@ -119,29 +119,29 @@ final class APIClient {
     }
 }
 
-// Authentifizierung
-@MainActor                                          // bringt alles auf den Hauptthread
-final class AuthVerwaltung: ObservableObject {      // final class um es vor vererbung und überschreibungen zu schützen
+/// Authentifizierung
+@MainActor                                          /// bringt alles auf den Hauptthread
+final class AuthVerwaltung: ObservableObject {      /// final class um es vor vererbung und überschreibungen zu schützen
     @Published var token:         String? = Schluesselbund.laden()
     @Published var fehlermeldung: String?
 
-    private let api = APIClient(basisURL: URL(string: "http://100.83.30.52:8000")!) // private let ist eine konstante, die nur hier sichtbar ist
+    private let api = APIClient(basisURL: URL(string: "http://100.83.30.52:8000")!) /// private let ist eine konstante, die nur hier sichtbar ist
 
-    func anmelden(firmenID: String, benutzername: String, passwort: String) async { // async kann begonnen, pausiert und später fortgesetzt werden. await muss verwendet werden, bis Ergebnis verfügbar ist. Verwendet, weil Netzwerkaufruf Zeit braucht
-        fehlermeldung = nil                         // Anmeldung nicht fehlgeschlagen
+    func anmelden(firmenID: String, benutzername: String, passwort: String) async { /// async kann begonnen, pausiert und später fortgesetzt werden. await muss verwendet werden, bis Ergebnis verfügbar ist. Verwendet, weil Netzwerkaufruf Zeit braucht
+        fehlermeldung = nil                         /// Anmeldung nicht fehlgeschlagen
         do {
-            let antwort = try await api.anmelden(firmenID: firmenID, benutzername: benutzername, passwort: passwort) // Aufruf ist async throws, weil Anfrage warten muss und Fehler auftreten können
-            Schluesselbund.speichern(antwort.token) // token wird im Schlüsselbund gespeichert
-            token = antwort.token                   // token wird published. Weil das im @MainActor passiert geschieht das im Hauptthread und löst Update im UI aus
-        } catch {                                   // Fehlerbehandlung
-            fehlermeldung = (error as? LocalizedError)?.errorDescription ?? "Login fehlgeschlagen" // Mit fehlermeldung und token kann UI aktuallisiert werden
+            let antwort = try await api.anmelden(firmenID: firmenID, benutzername: benutzername, passwort: passwort) /// Aufruf ist async throws, weil Anfrage warten muss und Fehler auftreten können
+            Schluesselbund.speichern(antwort.token) /// token wird im Schlüsselbund gespeichert
+            token = antwort.token                   /// token wird published. Weil das im @MainActor passiert geschieht das im Hauptthread und löst Update im UI aus
+        } catch {                                   /// Fehlerbehandlung
+            fehlermeldung = (error as? LocalizedError)?.errorDescription ?? "Login fehlgeschlagen" /// Mit fehlermeldung und token kann UI aktuallisiert werden
         }
     }
     func abmelden() {
         Schluesselbund.loeschen()
         token = nil
     }
-    func artikelLaden() async throws -> [Artikel] { // async = läuft asyncron,throws = kann Fehler werfen
+    func artikelLaden() async throws -> [Artikel] { /// async = läuft asyncron,throws = kann Fehler werfen
         guard let token else { return [] }
         return try await api.artikelLaden(token: token)
     }

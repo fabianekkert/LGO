@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		094E39422F4EE1FE0015531D /* CodeScanner in Frameworks */ = {isa = PBXBuildFile; productRef = 094E39412F4EE1FE0015531D /* CodeScanner */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		09E0C98B2F3A01F50061DABC /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -65,6 +69,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				094E39422F4EE1FE0015531D /* CodeScanner in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -125,6 +130,7 @@
 			);
 			name = LGO;
 			packageProductDependencies = (
+				094E39412F4EE1FE0015531D /* CodeScanner */,
 			);
 			productName = LGO;
 			productReference = 09E0C9792F3A01F30061DABC /* LGO.app */;
@@ -208,6 +214,9 @@
 			);
 			mainGroup = 09E0C9702F3A01F30061DABC;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				094E39402F4EE1FE0015531D /* XCRemoteSwiftPackageReference "CodeScanner" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 09E0C97A2F3A01F30061DABC /* Products */;
 			projectDirPath = "";
@@ -296,6 +305,7 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = LGO/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "We need the camera to scan QR-Codes";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -341,6 +351,7 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = LGO/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "We need the camera to scan QR-Codes";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -630,6 +641,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		094E39402F4EE1FE0015531D /* XCRemoteSwiftPackageReference "CodeScanner" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/twostraws/CodeScanner";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		094E39412F4EE1FE0015531D /* CodeScanner */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 094E39402F4EE1FE0015531D /* XCRemoteSwiftPackageReference "CodeScanner" */;
+			productName = CodeScanner;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 09E0C9712F3A01F30061DABC /* Project object */;
 }

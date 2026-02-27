@@ -21,7 +21,6 @@ public struct Settings: View {
         }
 }
 
-// Funktion um die Preview zu ermöglichen
 struct Settings_Previews: PreviewProvider {
     static var previews: some View {
         NavigationStack {
