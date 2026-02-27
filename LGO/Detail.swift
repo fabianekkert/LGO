@@ -49,7 +49,9 @@ struct Detail: View {
                     }
                     .buttonStyle(.plain)
                     TextField("0", text: $quantity)
+                        #if os(iOS)
                         .keyboardType(.numberPad)
+                        #endif
                         .multilineTextAlignment(.center)
                         .frame(width: 50)
                         .padding(.vertical, 2)
@@ -106,7 +108,9 @@ struct Detail: View {
                         .buttonStyle(.plain)
                         .disabled(!minQuantityIsOn)
                         TextField("0", text: $minQuantity)
+                            #if os(iOS)
                             .keyboardType(.numberPad)
+                            #endif
                             .multilineTextAlignment(.center)
                             .frame(width: 50)
                             .padding(.vertical, 2)
@@ -162,9 +166,13 @@ struct Detail: View {
             location = item.location
         }
         .navigationTitle(item.itemname)
+        #if os(macOS)
         .navigationSubtitle(item.itemnumber)
+        #endif
+        #if os(iOS)
         .navigationBarTitleDisplayMode( .inline )
         .navigationBarBackButtonHidden(true)
+        #endif
         
 #if os(macOS)
         .navigationSplitViewColumnWidth(min: 180, ideal: 200)
@@ -197,7 +205,33 @@ struct Detail: View {
                     Image(systemName: "checkmark")
                 }
             }
-            
+#elseif os(macOS)
+            ToolbarItem(placement: .cancellationAction) {
+                Button {
+                    dismiss()
+                } label: {
+                    Text("Abbrechen")
+                }
+            }
+            ToolbarItem(placement: .confirmationAction) {
+                Button {
+                    item.itemname = itemname
+                    item.itemnumber = itemnumber
+                    item.quantity = Int(quantity) ?? 0
+                    item.minQuantityIsOn = minQuantityIsOn
+                    item.minQuantity = Int(minQuantity) ?? 0
+                    item.orderdIsOn = orderdIsOn
+                    item.location = location
+                    modelContext.insert(item)
+                    guard let _ = try? modelContext.save() else {
+                        print("ERROR: Save on Detail did not work")
+                        return
+                    }
+                    dismiss()
+                } label: {
+                    Text("Sichern")
+                }
+            }
 #endif
         }
         .overlay {

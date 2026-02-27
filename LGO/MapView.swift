@@ -16,7 +16,7 @@ struct MapView: View {
                     .resizable()
                     .scaledToFit()
                 
-                // Der rote Punkt, wenn eine Position angegeben wurde
+                // Der Punkt, wenn eine Position angegeben wurde
                 if let coordinates = parseCoordinates(from: location) {
                     Circle()
                         .fill(Color.blue)
@@ -96,24 +96,5 @@ struct MapView: View {
         let y = (CGFloat(number) - 0.5) / maxRows
         
         return (x, y)
-    }
-}
-
-#Preview {
-    VStack(spacing: 20) {
-        Text("Position: A3")
-        MapView(location: "A3")
-            .frame(height: 200)
-            .padding()
-        
-        Text("Position: 0.5,0.5 (Mitte)")
-        MapView(location: "0.5,0.5")
-            .frame(height: 200)
-            .padding()
-        
-        Text("Keine Position")
-        MapView(location: "")
-            .frame(height: 200)
-            .padding()
     }
 }

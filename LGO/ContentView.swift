@@ -1,8 +1,6 @@
-///  ContentView.swift
-///  LGO
-///  Created by Fabian on 09.02.26.
-
+#if os(iOS)
 import CodeScanner
+#endif
 import SwiftUI
 import SwiftData
 import AVFoundation
@@ -15,13 +13,12 @@ struct ContentView: View {
     @State private var sheetIsPresented        = false
     @State private var isShowingScanner        = false
     @State private var showScannedItemDetail   = false
-    @State private var isSearchFieldExpanded   = true
     @State private var currentSort: SortOption = .alphabetical
     
     /// Sortier-Optionen
     enum SortOption: String, CaseIterable {
-        case alphabetical = "Alphabetisch"
-        case byNumber     = "Nach Artikelnummer"
+        case alphabetical = "Bezeichnung"
+        case byNumber     = "Nummer"
     }
     /// Artikellabel in der Liste
     private struct ItemRow: View {
@@ -142,19 +139,35 @@ struct ContentView: View {
                 NavigationStack{
                     Detail(item: Item())
                         .navigationTitle("Neuer Artikel")
+                        #if os(iOS)
                         .navigationBarTitleDisplayMode(.inline)
+                        #endif
                 }
             }
-            .sheet(isPresented: $isShowingScanner) {    /// Sheet für Scanneransicht
+#if os(macOS)
+            .sheet(isPresented: $isShowingScanner) {    /// Sheet für Scanneransicht (macOS Ersatz)
+                VStack(spacing: 12) {
+                    Image(systemName: "qrcode.viewfinder")
+                        .font(.largeTitle)
+                    Text("QR-Scan ist am Mac nicht verfügbar.")
+                    Button("Schließen") { isShowingScanner = false }
+                }
+                .frame(width: 320, height: 200)
+                .padding()
+            }
+#else
+            .sheet(isPresented: $isShowingScanner) {    /// Sheet für Scanneransicht (iOS)
                 CodeScannerView(
                     codeTypes: [.qr],
                     simulatedData: "Schraube M10",
                     completion: handleScan
                 )
             }
+#endif
             .navigationTitle("Lager")
-            .navigationBarTitleDisplayMode(.automatic)
+            #if os(macOS)
             .navigationSubtitle(Text("\(visibleItems.count) " + (visibleItems.count == 1 ? "Eintrag" : "Einträge")))
+            #endif
 #if os(macOS)
             .navigationSplitViewColumnWidth(min: 180, ideal: 200)
 #endif
@@ -174,8 +187,10 @@ struct ContentView: View {
                         } label: {
                             Label("Einstellungen", systemImage: "gear")
                         }
+                        
                         Divider()
-                        Section("Sortieren") {
+                        
+                        Section {
                             ForEach(SortOption.allCases, id: \.self) { option in
                                 Button {
                                     currentSort = option
@@ -196,42 +211,29 @@ struct ContentView: View {
                 }
                 
                 ToolbarItem(placement: .bottomBar) {    /// Suchfunktion (links)
-                    if isSearchFieldExpanded || !searchText.isEmpty {
-                        HStack(spacing: 6) {
-                            Image(systemName: "magnifyingglass")
-                                .foregroundStyle(.secondary)
-                                .font(.subheadline)
-                            
-                            TextField("Suchen", text: $searchText)
-                                .textFieldStyle(.plain)
-                                .frame(width: 235)
-                            
-                            if !searchText.isEmpty {
-                                Button {
-                                    searchText = ""
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundStyle(.secondary)
-                                        .font(.subheadline)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 6)
-                        .cornerRadius(10)
-                        .transition(.scale.combined(with: .opacity))
+                    HStack(spacing: 6) {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundStyle(.secondary)
+                            .font(.subheadline)
                         
-                    } else {
-                        Button {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                                isSearchFieldExpanded = true
+                        TextField("Suchen", text: $searchText)
+                            .textFieldStyle(.plain)
+                            .frame(width: 235)
+                        
+                        if !searchText.isEmpty {
+                            Button {
+                                searchText = ""
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundStyle(.secondary)
+                                    .font(.subheadline)
                             }
-                        } label: {
-                            Label("Suchen", systemImage: "magnifyingglass")
+                            .buttonStyle(.plain)
                         }
-                        .transition(.scale.combined(with: .opacity))
                     }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 6)
+                    .cornerRadius(10)
                 }
                 ToolbarItem(placement: .bottomBar) {    /// Spacer für Trennung
                     Spacer()
@@ -243,15 +245,50 @@ struct ContentView: View {
                         Label("QR Scan", systemImage: "qrcode.viewfinder")
                     }
                 }
-                
+#elseif os(macOS)
+                ToolbarItem(placement: .automatic) {   /// Item hinzufügen (macOS)
+                    Button {
+                        sheetIsPresented.toggle()
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+                ToolbarItem(placement: .automatic) {   /// Sortierung (macOS)
+                    Menu {
+                        ForEach(SortOption.allCases, id: \.self) { option in
+                            Button {
+                                currentSort = option
+                            } label: {
+                                HStack {
+                                    Text(option.rawValue)
+                                    if currentSort == option {
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                        }
+                    } label: {
+                        Label("Sortierung", systemImage: "arrow.up.arrow.down")
+                    }
+                }
+                ToolbarItem(placement: .automatic) {   /// Einstellungen (macOS)
+                    NavigationLink {
+                        Settings()
+                    } label: {
+                        Label("Einstellungen", systemImage: "gear")
+                    }
+                }
 #endif
                 
             }
-            .background(Color(UIColor { trait in    /// Hintergrund von den Listen in Light- und Dark Mode
-                trait.userInterfaceStyle == .dark
-                ? UIColor.systemBackground
-                : UIColor.systemGray6
-            }))
+#if os(macOS)
+            .searchable(text: $searchText, prompt: "Suchen")
+#endif
+            #if os(iOS)
+            .background(
+                Color(.systemBackground)
+            )
+            #endif
             .navigationDestination(isPresented: $showScannedItemDetail) {   /// Navigiert zum gescannten Item zur bearbeitung
                 if let item = scannedItem {
                     Detail(item: item)
@@ -259,6 +296,7 @@ struct ContentView: View {
             }
         }
     }
+#if os(iOS)
     func handleScan(result: Result<ScanResult,ScanError>) {     /// Scannereinstellungen und vergleich mit den Einträgen aus der Liste
         isShowingScanner = false
         
@@ -285,6 +323,7 @@ struct ContentView: View {
             print("Scanning failed: \(error.localizedDescription)")
         }
     }
+#endif
 }
 
 #Preview {
