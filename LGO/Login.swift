@@ -100,7 +100,8 @@ struct Login: View {
                             print(" Weiter wurde gedrückt")
                             print(" Login startet...")
                             
-                            dismiss()
+                            auth.token = "test"
+                            
                             await auth.anmelden(firmenID: companyid, benutzername: username, passwort: passwort)
                             istLaden = false
 
