@@ -23,21 +23,19 @@ struct LG0App: App {
     
     var body: some Scene {
         WindowGroup {
-            ZStack {
-                if auth.token != nil {
-                    NavigationStack {
-                        ContentView()
+            NavigationStack {
+                ContentView()
+            }
+            .overlay {
+                if auth.token == nil {
+                    ZStack {
+                        Rectangle()
+                            .fill(.background)
+                            .ignoresSafeArea()
+                        Login(auth: auth)
                     }
                 }
-                if auth.token == nil {
-                    Rectangle()
-                        .fill(.background)
-                        .ignoresSafeArea()
-                    Login(auth: auth)
-                        .transition(.opacity)
-                }
             }
-            .animation(.default, value: auth.token == nil)
             .onChange(of: scenePhase) { oldPhase, newPhase in
                 if newPhase == .background {
                     /// App geht in den Hintergrund → hier abmelden
