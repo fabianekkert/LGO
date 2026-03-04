@@ -7,10 +7,8 @@ import SwiftData
 
 @main
 struct LG0App: App {
-    @Environment(\.dismiss)    private var dismiss
     @Environment(\.scenePhase) private var scenePhase
     @StateObject               private var auth = AuthVerwaltung()
-    @State                     private var fullScreenCoverIsPresented: Bool = true
     
     var sharedModelContainer: ModelContainer = {
         let schema = Schema(Item.self)
@@ -25,13 +23,21 @@ struct LG0App: App {
     
     var body: some Scene {
         WindowGroup {
-            NavigationStack {
-                ContentView()
+            ZStack {
+                if auth.token != nil {
+                    NavigationStack {
+                        ContentView()
+                    }
+                }
+                if auth.token == nil {
+                    Rectangle()
+                        .fill(.background)
+                        .ignoresSafeArea()
+                    Login(auth: auth)
+                        .transition(.opacity)
+                }
             }
-            .fullScreenCover(isPresented: $fullScreenCoverIsPresented) {
-                Login()
-                    .environmentObject(auth)
-            }
+            .animation(.default, value: auth.token == nil)
             .onChange(of: scenePhase) { oldPhase, newPhase in
                 if newPhase == .background {
                     /// App geht in den Hintergrund → hier abmelden

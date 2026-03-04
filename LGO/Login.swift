@@ -10,14 +10,14 @@ struct Login: View {
     
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss)      private var dismiss
-    @EnvironmentObject           private var auth: AuthVerwaltung
+    @ObservedObject var auth: AuthVerwaltung
     
-    @State private var companyid:                String = ""
+    @State private var companyid:         String = ""
     @State private var username:          String = ""
     @State private var passwort:          String = ""
+    @State private var fehlertext:        String?
     @State private var isPasswordVisible: Bool   = false
     @State private var istLaden:          Bool   = false
-    @State private var fehlertext:        String?
     
     public var body: some View {
         VStack {
@@ -30,7 +30,9 @@ struct Login: View {
                         .multilineTextAlignment(.center)
                         .textContentType(.username)
                         .autocorrectionDisabled(true)
-                        .autocapitalization(.none)
+#if os(iOS) || os(tvOS) || os(visionOS)
+                        .textInputAutocapitalization(.never)
+#endif
                         .padding(10)
                         .overlay(RoundedRectangle(cornerRadius: 12).stroke(.secondary, lineWidth: 1))
                         .frame(width: 300)
@@ -39,7 +41,9 @@ struct Login: View {
                         .multilineTextAlignment(.center)
                         .textContentType(.username)
                         .autocorrectionDisabled(true)
-                        .autocapitalization(.none)
+#if os(iOS) || os(tvOS) || os(visionOS)
+                        .textInputAutocapitalization(.never)
+#endif
                         .padding(10)
                         .overlay(RoundedRectangle(cornerRadius: 12).stroke(.secondary, lineWidth: 1))
                         .frame(width: 300)
@@ -47,15 +51,19 @@ struct Login: View {
                     ZStack {
                         Group {   /// Als Gruppe, weil nur einer von beiden angezeigt werden soll
                             if isPasswordVisible {    /// Togglezustand (Per Default als nicht sichtbar)
-                                TextField("Passwort", text: $passwort)          /// Passwort wird in @State private var passwort geschrieben
+                                TextField("Passwort", text: $passwort)   /// Passwort wird in @State private var passwort geschrieben
                                     .textContentType(.password)
                                     .autocorrectionDisabled(true)
-                                    .autocapitalization(.none)
+#if os(iOS) || os(tvOS) || os(visionOS)
+                                    .textInputAutocapitalization(.never)
+#endif
                             } else {
                                 SecureField("Passwort", text: $passwort)   /// Passwort wird in @State private var passwort geschrieben
                                     .textContentType(.password)
                                     .autocorrectionDisabled(true)
-                                    .autocapitalization(.none)
+#if os(iOS) || os(tvOS) || os(visionOS)
+                                    .textInputAutocapitalization(.never)
+#endif
                             }
                         }
                         .multilineTextAlignment(.center)
@@ -81,47 +89,44 @@ struct Login: View {
                             .frame(width: 300)
                             .multilineTextAlignment(.center)
                     }
+                    Spacer().frame(height: 16)
+                    Button {
+                        Task {
+                            fehlertext = nil
+                            istLaden = true
+
+                            auth.abmelden()
+
+                            print(" Weiter wurde gedrückt")
+                            print(" Login startet...")
+                            
+                            dismiss()
+                            await auth.anmelden(firmenID: companyid, benutzername: username, passwort: passwort)
+                            istLaden = false
+
+                            if auth.token != nil {
+                                print("Login OK - Token erhalten")
+                                dismiss()
+                            } else {
+                                fehlertext = auth.fehlermeldung ?? "Login fehlgeschlagen"
+                                print("Login fehlgeschlagen:", fehlertext ?? "")
+                            }
+                        }
+                    } label: {
+                        Text("Weiter")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .frame(width: 280)
+                    .disabled(companyid.isEmpty || username.isEmpty || passwort.isEmpty || istLaden)
                 }
             }
             Spacer()
-        }
-        .toolbar {
-            ToolbarItem(placement: .bottomBar) {
-                Button {
-                    Task {    /// passiert alles, wenn die Schaltfläche betätigt wird.
-                        fehlertext = nil
-                        istLaden = true
-                        
-                        auth.abmelden()
-                        
-                        print(" Weiter wurde gedrückt")
-                        print(" Login startet...")
-                        
-                        dismiss()
-                        await auth.anmelden(firmenID: companyid, benutzername: username, passwort: passwort) /// Siehe Communikation Zeile 130-139
-                        istLaden = false   /// Durch Wertänderung wird ProgressView gestartet.
-                        
-                        if auth.token != nil {
-                            print("Login OK - Token erhalten")
-                            dismiss()
-                        } else {
-                            fehlertext = auth.fehlermeldung ?? "Login fehlgeschlagen"
-                            print("Login fehlgeschlagen:", fehlertext ?? "")
-                        }
-                    }
-                } label: {
-                    Text("Weiter")
-                }
-                .frame(width: 280)
-                .disabled(companyid.isEmpty || username.isEmpty || passwort.isEmpty || istLaden)
-            }
         }
     }
 }
 
 #Preview {
     NavigationStack {
-        Login()
-            .environmentObject(AuthVerwaltung())
+        Login(auth: AuthVerwaltung())
     }
 }
