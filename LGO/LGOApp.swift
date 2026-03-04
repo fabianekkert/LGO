@@ -36,14 +36,14 @@ struct LG0App: App {
                     }
                 }
             }
-            .onChange(of: scenePhase) { oldPhase, newPhase in
+            .onChange(of: scenePhase) { _, newPhase in
                 if newPhase == .background {
-                    /// App geht in den Hintergrund → hier abmelden
                     auth.abmelden()
                 }
             }
         }
         .modelContainer(sharedModelContainer)
+        .environmentObject(auth)
     }
     init() {
         print(URL.applicationSupportDirectory.path(percentEncoded: false))

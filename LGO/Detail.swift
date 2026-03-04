@@ -7,7 +7,7 @@ import SwiftUI
 import SwiftData
 
 struct Detail: View {
-    
+    @EnvironmentObject var auth: AuthVerwaltung
     /// Diese beiden Umgebungen ermöglichen die Nutzung von SwiftData und das Schließen des Screens
     @Environment(\.modelContext) var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -188,19 +188,41 @@ struct Detail: View {
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
-                    item.itemname = itemname
-                    item.itemnumber = itemnumber
-                    item.quantity = Int(quantity) ?? 0
-                    item.minQuantityIsOn = minQuantityIsOn
-                    item.minQuantity = Int(minQuantity) ?? 0
-                    item.orderdIsOn = orderdIsOn
-                    item.location = location
-                    modelContext.insert(item)
-                    guard let _ = try? modelContext.save() else {
-                        print("ERROR: Save on Detail did not work")
-                        return
+                    Task {
+
+                        // Werte aus dem Formular ins Item schreiben
+                        item.itemname = itemname
+                        item.itemnumber = itemnumber
+                        item.quantity = Int(quantity) ?? 0
+                        item.minQuantityIsOn = minQuantityIsOn
+                        item.minQuantity = Int(minQuantity) ?? 0
+                        item.orderdIsOn = orderdIsOn
+                        item.location = location
+
+                        // Artikel für API erstellen
+                        let artikel = Artikel(
+                            beschreibung: item.itemname,
+                            artikelnummer: item.itemnumber,
+                            bestand: item.quantity,
+                            meldebestand: item.minQuantity,
+                            lagerort: item.location
+                        )
+
+                        do {
+                            // API Request
+                            _ = try await auth.artikelErstellen(artikel)
+                            print("Artikel erfolgreich an API gesendet")    
+
+                            // Optional: lokal speichern (SwiftData)
+                            modelContext.insert(item)
+                            try modelContext.save()
+
+                            dismiss()
+
+                        } catch {
+                            print("API Fehler:", error)
+                        }
                     }
-                    dismiss()
                 } label: {
                     Image(systemName: "checkmark")
                 }
@@ -298,6 +320,7 @@ struct Detail: View {
 #Preview {
     NavigationStack{
         Detail(item: Item())
+            .environmentObject(AuthVerwaltung())
             .modelContainer(for: Item.self, inMemory: true)
     }
 }
