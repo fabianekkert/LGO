@@ -26,6 +26,7 @@ struct LG0App: App {
             NavigationStack {
                 ContentView()
             }
+            .environmentObject(auth)
             .overlay {
                 if auth.token == nil {
                     ZStack {
@@ -44,10 +45,21 @@ struct LG0App: App {
             }
         }
         .modelContainer(sharedModelContainer)
+#if os(macOS)
+        /// Separates Fenster für neuen Artikel (macOS)
+        Window("Neuer Artikel", id: "new-item") {
+            NavigationStack {
+                Detail(item: Item())
+                    .navigationTitle("Neuer Artikel")
+            }
+            .environmentObject(auth)
+        }
+        .modelContainer(sharedModelContainer)
+        .windowResizability(.contentSize)
+#endif
     }
     init() {
         print(URL.applicationSupportDirectory.path(percentEncoded: false))
     }
 }
-
 
