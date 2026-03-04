@@ -95,19 +95,17 @@ struct Login: View {
                             fehlertext = nil
                             istLaden = true
 
-                            auth.abmelden()
-
                             print(" Weiter wurde gedrückt")
                             print(" Login startet...")
                             
-                            auth.token = "test"
+                            auth.token = "test" /// Nur als Bypass für Testzwecke
+                            return              ///         "  "
                             
                             await auth.anmelden(firmenID: companyid, benutzername: username, passwort: passwort)
                             istLaden = false
 
                             if auth.token != nil {
                                 print("Login OK - Token erhalten")
-                                dismiss()
                             } else {
                                 fehlertext = auth.fehlermeldung ?? "Login fehlgeschlagen"
                                 print("Login fehlgeschlagen:", fehlertext ?? "")
