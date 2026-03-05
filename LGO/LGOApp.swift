@@ -37,26 +37,14 @@ struct LG0App: App {
                     }
                 }
             }
-            .onChange(of: scenePhase) { oldPhase, newPhase in
+            .onChange(of: scenePhase) { _, newPhase in
                 if newPhase == .background {
-                    /// App geht in den Hintergrund → hier abmelden
                     auth.abmelden()
                 }
             }
         }
         .modelContainer(sharedModelContainer)
-#if os(macOS)
-        /// Separates Fenster für neuen Artikel (macOS)
-        Window("Neuer Artikel", id: "new-item") {
-            NavigationStack {
-                Detail(item: Item())
-                    .navigationTitle("Neuer Artikel")
-            }
-            .environmentObject(auth)
-        }
-        .modelContainer(sharedModelContainer)
-        .windowResizability(.contentSize)
-#endif
+        .environmentObject(auth)
     }
     init() {
         print(URL.applicationSupportDirectory.path(percentEncoded: false))
