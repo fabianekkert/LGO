@@ -28,133 +28,17 @@ struct Detail: View {
     
     public var body: some View {
         ZStack {
-        List {
-            Section {
-                TextField("Artikelbezeichnung", text: $itemname)
-                TextField("Artikelnummer", text: $itemnumber)
+#if os(iOS)
+            List {
+                formContent
             }
-            Section {
-                HStack {
-                    Text("Anzahl")
-                    Spacer()
-                    Button {
-                        let currentValue = Int(quantity) ?? 0
-                        if currentValue > 0 {
-                            quantity = String(currentValue - 1)
-                        }
-                    } label: {
-                        Image(systemName: "minus.circle.fill")
-                            .foregroundStyle(Color.red)
-                            .font(.title2)
-                    }
-                    .buttonStyle(.plain)
-                    TextField("0", text: $quantity)
-                        #if os(iOS)
-                        .keyboardType(.numberPad)
-                        #endif
-                        .multilineTextAlignment(.center)
-                        .frame(width: 50)
-                        .padding(.vertical, 2)
-                        .background(Color.secondary.opacity(0.15))
-                        .clipShape(RoundedRectangle(cornerRadius: 15))
-                    Button {
-                        let currentValue = Int(quantity) ?? 0
-                        quantity = String(currentValue + 1)
-                    } label: {
-                        Image(systemName: "plus.circle.fill")
-                            .foregroundStyle(Color.green)
-                            .font(.title2)
-                    }
-                    .buttonStyle(.plain)
-                }
-                    Toggle("Bestellt", isOn: $orderdIsOn)
+            .listStyle(.insetGrouped)
+#else
+            Form {
+                formContent
             }
-            Section {
-                Button {
-                    withAnimation {
-                        minQuantityExpanded.toggle()
-                    }
-                } label: {
-                    HStack {
-                        Text("Meldebestand")
-                            .foregroundStyle(.primary)
-                        
-                        Image(systemName: "chevron.down")
-                            .foregroundStyle(.secondary)
-                            .rotationEffect(.degrees(minQuantityExpanded ? 180 : 0))
-                        Spacer()
-                        Toggle("Aktiv", isOn: $minQuantityIsOn)
-                            .labelsHidden()
-                        
-                    }
-                }
-                .buttonStyle(.plain)
-                
-                if minQuantityExpanded {
-                    HStack {
-                        Spacer()
-                        Button {
-                            if minQuantityIsOn {
-                                let currentValue = Int(minQuantity) ?? 0
-                                if currentValue > 0 {
-                                    minQuantity = String(currentValue - 1)
-                                }
-                            }
-                        } label: {
-                            Image(systemName: "minus.circle.fill")
-                                .foregroundStyle(minQuantityIsOn ? Color.red : Color.gray)
-                                .font(.title2)
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(!minQuantityIsOn)
-                        TextField("0", text: $minQuantity)
-                            #if os(iOS)
-                            .keyboardType(.numberPad)
-                            #endif
-                            .multilineTextAlignment(.center)
-                            .frame(width: 50)
-                            .padding(.vertical, 2)
-                            .background(Color.secondary.opacity(0.15))
-                            .clipShape(RoundedRectangle(cornerRadius: 15))
-                            .disabled(!minQuantityIsOn)
-                        Button {
-                            if minQuantityIsOn {
-                                let currentValue = Int(minQuantity) ?? 0
-                                minQuantity = String(currentValue + 1)
-                            }
-                        } label: {
-                            Image(systemName: "plus.circle.fill")
-                                .foregroundStyle(minQuantityIsOn ? Color.green : Color.gray)
-                                .font(.title2)
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(!minQuantityIsOn)
-                    }
-                }
-            }
-            Section {
-                HStack {
-                    Text("Lagerort")
-                    Spacer()
-                    HStack(spacing: 8) {
-                        TextField("Position", text: $location)
-                            .multilineTextAlignment(.trailing)
-                        Spacer()
-                    }
-                }
-                MapView(location: location)
-                    .listRowInsets(EdgeInsets())
-            }
-            Section {
-                Button {
-                    showDeleteConfirmation = true
-                } label: {
-                    Text("Artikel löschen")
-                        .frame(maxWidth: .infinity)
-                        .foregroundStyle(.red)
-                }
-            }
-        }
+            .formStyle(.grouped)
+#endif
         }
         .onAppear() {
             itemname = item.itemname
@@ -166,15 +50,11 @@ struct Detail: View {
             location = item.location
         }
         .navigationTitle(item.itemname)
-        #if os(macOS)
-        .navigationSubtitle(item.itemnumber)
-        #endif
-        #if os(iOS)
-        .navigationBarTitleDisplayMode( .inline )
+#if os(iOS)
+        .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
-        #endif
-        
-#if os(macOS)
+#elseif os(macOS)
+        .navigationSubtitle(item.itemnumber)
         .navigationSplitViewColumnWidth(min: 180, ideal: 200)
 #endif
         .toolbar {
@@ -229,29 +109,13 @@ struct Detail: View {
             }
 #elseif os(macOS)
             ToolbarItem(placement: .cancellationAction) {
-                Button {
+                Button("Abbrechen") {
                     dismiss()
-                } label: {
-                    Text("Abbrechen")
                 }
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button {
-                    item.itemname = itemname
-                    item.itemnumber = itemnumber
-                    item.quantity = Int(quantity) ?? 0
-                    item.minQuantityIsOn = minQuantityIsOn
-                    item.minQuantity = Int(minQuantity) ?? 0
-                    item.orderdIsOn = orderdIsOn
-                    item.location = location
-                    modelContext.insert(item)
-                    guard let _ = try? modelContext.save() else {
-                        print("ERROR: Save on Detail did not work")
-                        return
-                    }
-                    dismiss()
-                } label: {
-                    Text("Sichern")
+                Button("Sichern") {
+                    saveItem()
                 }
             }
 #endif

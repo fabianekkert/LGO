@@ -26,6 +26,7 @@ struct LG0App: App {
             NavigationStack {
                 ContentView()
             }
+            .environmentObject(auth)
             .overlay {
                 if auth.token == nil {
                     ZStack {
@@ -49,5 +50,4 @@ struct LG0App: App {
         print(URL.applicationSupportDirectory.path(percentEncoded: false))
     }
 }
-
 

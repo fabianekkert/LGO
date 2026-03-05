@@ -1,6 +1,4 @@
-#if os(iOS)
 import CodeScanner
-#endif
 import SwiftUI
 import SwiftData
 import AVFoundation
@@ -8,20 +6,23 @@ import AVFoundation
 struct ContentView: View {
     @Query var items: [Item]
     @Environment(\.modelContext) var modelContext
+    @EnvironmentObject var auth: AuthVerwaltung
+#if os(macOS)
+    @Environment(\.openWindow) private var openWindow
+#endif
     @State private var scannedItem: Item?
     @State private var searchText              = ""
     @State private var sheetIsPresented        = false
     @State private var isShowingScanner        = false
     @State private var showScannedItemDetail   = false
     @State private var currentSort: SortOption = .alphabetical
-    
     /// Sortier-Optionen
     enum SortOption: String, CaseIterable {
         case alphabetical = "Bezeichnung"
         case byNumber     = "Nummer"
     }
     /// Artikellabel in der Liste
-    private struct ItemRow: View {
+    private struct ItemRow:     View  {
         let item: Item
         var body: some View {
             HStack {
@@ -63,7 +64,7 @@ struct ContentView: View {
         }
     }
     /// Sortierfunktion
-    private var sortedItems: [Item] {
+    private var sortedItems:   [Item] {
         switch currentSort {
         case .alphabetical:
             return filteredItems.sorted { $0.itemname.localizedCompare($1.itemname) == .orderedAscending }
@@ -75,56 +76,57 @@ struct ContentView: View {
     private var criticalItems: [Item] {
         sortedItems.filter { !$0.orderdIsOn && $0.minQuantityIsOn && $0.quantity <= $0.minQuantity }
     }
-    private var orderedItems: [Item] {
+    private var orderedItems:  [Item] {
         sortedItems.filter { $0.orderdIsOn }
     }
-    private var normalItems: [Item] {
+    private var normalItems:   [Item] {
         sortedItems.filter { !$0.orderdIsOn && !($0.minQuantityIsOn && $0.quantity <= $0.minQuantity) }
     }
     /// Anzeige nach Sortierung
-    private var visibleItems: [Item] { sortedItems }
-    /// Ansicht
-    var body: some View {
-        NavigationStack {
-            List {
-                /// Section für unter Meldebestand
-                if !criticalItems.isEmpty {
-                    Section(header: Text("Unter Meldebestand").font(.subheadline)) {
-                        ForEach(criticalItems) { item in
-                            NavigationLink {
-                                Detail(item: item)
-                            } label: {
-                                ItemRow(item: item)
-                            }
-                        }
-                    }
-                }
-                /// Section für Bestellt
-                if !orderedItems.isEmpty {
-                    Section(header: Text("Bestellt").font(.subheadline)) {
-                        ForEach(orderedItems) { item in
-                            NavigationLink {
-                                Detail(item: item)
-                            } label: {
-                                ItemRow(item: item)
-                            }
-                        }
-                    }
-                }
-                /// Section für Lagerbestand "normal"
-                if !normalItems.isEmpty {
-                    Section(header: Text("Lagerbestand").font(.subheadline)) {
-                        ForEach(normalItems) { item in
-                            NavigationLink {
-                                Detail(item: item)
-                            } label: {
-                                ItemRow(item: item)
-                            }
-                        }
+    private var visibleItems:  [Item] { sortedItems }
+    /// Sections-Inhalt — wird von beiden Plattformen verwendet
+    @ViewBuilder
+    private var itemSections: some View {
+        /// Section für unter Meldebestand
+        if !criticalItems.isEmpty {
+            Section(header: Text("Unter Meldebestand").font(.subheadline)) {
+                ForEach(criticalItems) { item in
+                    NavigationLink {
+                        Detail(item: item)
+                    } label: {
+                        ItemRow(item: item)
                     }
                 }
             }
-            .scrollContentBackground(.hidden)
+        }
+        /// Section für Bestellt
+        if !orderedItems.isEmpty {
+            Section(header: Text("Bestellt").font(.subheadline)) {
+                ForEach(orderedItems) { item in
+                    NavigationLink {
+                        Detail(item: item)
+                    } label: {
+                        ItemRow(item: item)
+                    }
+                }
+            }
+        }
+        /// Section für Lagerbestand "normal"
+        if !normalItems.isEmpty {
+            Section(header: Text("Lagerbestand").font(.subheadline)) {
+                ForEach(normalItems) { item in
+                    NavigationLink {
+                        Detail(item: item)
+                    } label: {
+                        ItemRow(item: item)
+                    }
+                }
+            }
+        }
+    }
+    /// Gemeinsame Modifier für die Liste
+    private func applyCommonModifiers<V: View>(_ view: V) -> some View {
+        view
             .overlay {  /// Wenn Liste Leer
                 if visibleItems.isEmpty {
                     ContentUnavailableView(
@@ -134,50 +136,86 @@ struct ContentView: View {
                     )
                 }
             }
-            .listStyle(.automatic)
+            .navigationTitle(auth.token == nil ? "" : "Lager")
+            .navigationSubtitle(auth.token == nil ? "" : "\(visibleItems.count) " + (visibleItems.count == 1 ? "Eintrag" : "Einträge"))
+            .toolbar(auth.token == nil ? .hidden : .automatic)
+            .navigationDestination(isPresented: $showScannedItemDetail) {
+                if let item = scannedItem {
+                    Detail(item: item)
+                }
+            }
+    }
+    /// Gemeinsame Liste — wird von beiden Plattformen verwendet
+    private var itemList: some View {
+#if os(iOS)
+        applyCommonModifiers(
+            List {
+                itemSections
+            }
+            .listStyle(.insetGrouped)
             .sheet(isPresented: $sheetIsPresented) {    /// Sheet für neuen Artikel
-                NavigationStack{
+                NavigationStack {
                     Detail(item: Item())
                         .navigationTitle("Neuer Artikel")
-                        #if os(iOS)
                         .navigationBarTitleDisplayMode(.inline)
-                        #endif
                 }
             }
-#if os(macOS)
-            .sheet(isPresented: $isShowingScanner) {    /// Sheet für Scanneransicht (macOS Ersatz)
-                VStack(spacing: 12) {
-                    Image(systemName: "qrcode.viewfinder")
-                        .font(.largeTitle)
-                    Text("QR-Scan ist am Mac nicht verfügbar.")
-                    Button("Schließen") { isShowingScanner = false }
-                }
-                .frame(width: 320, height: 200)
-                .padding()
-            }
+        )
 #else
-            .sheet(isPresented: $isShowingScanner) {    /// Sheet für Scanneransicht (iOS)
+        applyCommonModifiers(
+            Form {
+                itemSections
+            }
+            .formStyle(.grouped)
+        )
+#endif
+    }
+#if os(iOS)
+    /// Scannereinstellungen und Vergleich mit den Einträgen aus der Liste
+    func handleScan(result: Result<ScanResult, ScanError>) {
+        isShowingScanner = false
+        
+        switch result {
+        case .success(let result):
+            let scanned = result.string.components(separatedBy: " ")
+            guard scanned.count == 2 else { return }
+            
+            let scannedName = scanned[0]
+            let scannedNumber = scanned[1]
+            
+            if let matchedItem = items.first(where: {
+                $0.itemname == scannedName && $0.itemnumber == scannedNumber
+            }) {
+                scannedItem = matchedItem
+                showScannedItemDetail = true
+            } else {
+                let newItem = Item(itemname: scannedName, itemnumber: scannedNumber)
+                scannedItem = newItem
+                showScannedItemDetail = true
+            }
+            
+        case .failure(let error):
+            print("Scanning failed: \(error.localizedDescription)")
+        }
+    }
+#endif
+    /// Ansicht
+    var body: some View {
+#if os(iOS)
+        itemList
+            .sheet(isPresented: $isShowingScanner) {    /// Scanner (iOS)
                 CodeScannerView(
                     codeTypes: [.qr],
                     simulatedData: "Schraube M10",
                     completion: handleScan
                 )
             }
-#endif
-            .navigationTitle("Lager")
-            #if os(macOS)
-            .navigationSubtitle(Text("\(visibleItems.count) " + (visibleItems.count == 1 ? "Eintrag" : "Einträge")))
-            #endif
-#if os(macOS)
-            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
-#endif
             .toolbar {
-#if os(iOS)
                 ToolbarItem(placement: .topBarTrailing) {   /// Item hinzufügen
                     Button {
                         sheetIsPresented.toggle()
                     } label: {
-                        Image (systemName: "plus")
+                        Image(systemName: "plus")
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {   /// Menü
@@ -187,9 +225,7 @@ struct ContentView: View {
                         } label: {
                             Label("Einstellungen", systemImage: "gear")
                         }
-                        
                         Divider()
-                        
                         Section {
                             ForEach(SortOption.allCases, id: \.self) { option in
                                 Button {
@@ -209,7 +245,6 @@ struct ContentView: View {
                         Label("Menü", systemImage: "ellipsis")
                     }
                 }
-                
                 ToolbarItem(placement: .bottomBar) {    /// Suchfunktion (links)
                     HStack(spacing: 6) {
                         Image(systemName: "magnifyingglass")
@@ -245,15 +280,20 @@ struct ContentView: View {
                         Label("QR Scan", systemImage: "qrcode.viewfinder")
                     }
                 }
-#elseif os(macOS)
-                ToolbarItem(placement: .automatic) {   /// Item hinzufügen (macOS)
+            }
+            .background(Color(.systemGroupedBackground))
+#else
+        itemList
+            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
+            .toolbar {
+                ToolbarItem(placement: .automatic) {   /// Item hinzufügen
                     Button {
-                        sheetIsPresented.toggle()
+                        openWindow(id: "new-item")
                     } label: {
                         Image(systemName: "plus")
                     }
                 }
-                ToolbarItem(placement: .automatic) {   /// Sortierung (macOS)
+                ToolbarItem(placement: .automatic) {   /// Sortierung
                     Menu {
                         ForEach(SortOption.allCases, id: \.self) { option in
                             Button {
@@ -271,62 +311,23 @@ struct ContentView: View {
                         Label("Sortierung", systemImage: "arrow.up.arrow.down")
                     }
                 }
-                ToolbarItem(placement: .automatic) {   /// Einstellungen (macOS)
+                ToolbarItem(placement: .automatic) {   /// Einstellungen
                     NavigationLink {
                         Settings()
                     } label: {
                         Label("Einstellungen", systemImage: "gear")
                     }
                 }
-#endif
-                
             }
-#if os(macOS)
             .searchable(text: $searchText, prompt: "Suchen")
 #endif
-            #if os(iOS)
-            .background(
-                Color(.systemBackground)
-            )
-            #endif
-            .navigationDestination(isPresented: $showScannedItemDetail) {   /// Navigiert zum gescannten Item zur bearbeitung
-                if let item = scannedItem {
-                    Detail(item: item)
-                }
-            }
-        }
     }
-#if os(iOS)
-    func handleScan(result: Result<ScanResult,ScanError>) {     /// Scannereinstellungen und vergleich mit den Einträgen aus der Liste
-        isShowingScanner = false
-        
-        switch result {
-        case .success(let result):
-            let scanned = result.string.components(separatedBy: " ")
-            guard scanned.count == 2 else { return }
-            
-            let scannedName = scanned[0]
-            let scannedNumber = scanned[1]
-            
-            if let matchedItem = items.first(where: {
-                $0.itemname == scannedName && $0.itemnumber == scannedNumber
-            }) {
-                scannedItem = matchedItem
-                showScannedItemDetail = true
-            } else {
-                let newItem = Item(itemname: scannedName, itemnumber: scannedNumber)
-                scannedItem = newItem
-                showScannedItemDetail = true
-            }
-            
-        case .failure(let error):
-            print("Scanning failed: \(error.localizedDescription)")
-        }
-    }
-#endif
 }
 
 #Preview {
-    ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+    NavigationStack {
+        ContentView()
+    }
+    .environmentObject(AuthVerwaltung())
+    .modelContainer(for: Item.self, inMemory: true)
 }
