@@ -94,6 +94,9 @@ final class APIClient {
     func artikelLaden(token: String) async throws -> [Artikel] {
         return try await anfrage(pfad: "/articles", methode: "GET", body: Optional<LoginAnfrage>.none, token: token)
     }
+    func artikelErstellen(artikel: Artikel, token: String) async throws -> Artikel {
+        return try await anfrage(pfad: "/articles", methode: "POST", body: artikel, token: token)
+    }
     private func anfrage<Body: Encodable, Antwort: Decodable>(
         pfad:    String,
         methode: String,
@@ -144,6 +147,10 @@ final class AuthVerwaltung: ObservableObject {      /// final class um es vor ve
     func artikelLaden() async throws -> [Artikel] { /// async = läuft asyncron,throws = kann Fehler werfen
         guard let token else { return [] }
         return try await api.artikelLaden(token: token)
+    }
+    func artikelErstellen(_ artikel: Artikel) async throws -> Artikel {
+        guard let token else { throw NetzwerkFehler.unbekannt }
+        return try await api.artikelErstellen(artikel: artikel, token: token)
     }
 }
 

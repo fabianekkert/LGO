@@ -11,6 +11,7 @@ struct Detail: View {
     /// Diese beiden Umgebungen ermöglichen die Nutzung von SwiftData und das Schließen des Screens
     @Environment(\.modelContext) var modelContext
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var auth: AuthVerwaltung
     
     /// Die Variablen werden nur hier verwendet(daher auch private var). Sie werden in Zeile 73 mit den Init-Werten aus der class Item gefüllt.
     /// Bei Bestätigung in Zeile 103-122 werden die Werte in die Variablen von der class Item geschrieben und gespeichert.
@@ -26,8 +27,8 @@ struct Detail: View {
     @State private var location:               String = ""    /// Lagerort
     @State private var showDeleteConfirmation: Bool   = false /// Bestätigungsdialog für Löschen
     
-    /// Speichert die lokalen Werte zurück ins Item und persistiert
-    private func saveItem() {
+    /// Speichert die lokalen Werte zurück ins Item, sendet an API und persistiert lokal
+    private func saveItem() async {
         item.itemname = itemname
         item.itemnumber = itemnumber
         item.quantity = Int(quantity) ?? 0
@@ -35,12 +36,25 @@ struct Detail: View {
         item.minQuantity = Int(minQuantity) ?? 0
         item.orderdIsOn = orderdIsOn
         item.location = location
-        modelContext.insert(item)
-        guard let _ = try? modelContext.save() else {
-            print("ERROR: Save on Detail did not work")
-            return
+
+        let artikel = Artikel(
+            beschreibung: item.itemname,
+            artikelnummer: item.itemnumber,
+            bestand: item.quantity,
+            meldebestand: item.minQuantity,
+            lagerort: item.location
+        )
+
+        do {
+            _ = try await auth.artikelErstellen(artikel)
+            print("Artikel erfolgreich an API gesendet")
+
+            modelContext.insert(item)
+            try modelContext.save()
+            dismiss()
+        } catch {
+            print("API Fehler:", error)
         }
-        dismiss()
     }
     /// Löscht das Item und schließt die Ansicht
     private func deleteItem() {
@@ -237,7 +251,9 @@ struct Detail: View {
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Sichern") {
-                    saveItem()
+                    Task {
+                        await saveItem()
+                    }
                 }
             }
         }
