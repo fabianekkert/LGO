@@ -7,25 +7,39 @@ import SwiftUI
 import SwiftData
 
 struct Detail: View {
-    
+    @EnvironmentObject var auth: AuthVerwaltung
     /// Diese beiden Umgebungen ermöglichen die Nutzung von SwiftData und das Schließen des Screens
     @Environment(\.modelContext) var modelContext
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var auth: AuthVerwaltung
     
     /// Die Variablen werden nur hier verwendet(daher auch private var). Sie werden in Zeile 73 mit den Init-Werten aus der class Item gefüllt.
     /// Bei Bestätigung in Zeile 103-122 werden die Werte in die Variablen von der class Item geschrieben und gespeichert.
     /// Eine ID wird automatisch generiert und muss daher nicht in ContentView.swift Zeile 16 zugewiesen werden.
-    @Bindable var      item:                   Item           /// Übergebe class an @State var item
-    @State private var itemname:               String = ""    /// Artikelbezeichnung
-    @State private var itemnumber:             String = ""    /// Artikelnummer
-    @State private var quantity:               String = ""    /// Anzahl
-    @State private var minQuantityIsOn:        Bool   = false /// Toggle Meldebestand
-    @State private var minQuantity:            String = ""    /// Meldebestand
-    @State private var minQuantityExpanded:    Bool   = false /// Meldebestand aufgeklappt
-    @State private var orderdIsOn:             Bool   = false /// Toggle Bestellt
-    @State private var location:               String = ""    /// Lagerort
-    @State private var showDeleteConfirmation: Bool   = false /// Bestätigungsdialog für Löschen
+    @Bindable var      item:            Item             /// Übergebe class an @State var item
+    @State private var itemname:        String = ""      /// Artikelbezeichnung
+    @State private var itemnumber:      String = ""      /// Artikelnummer
+    @State private var quantity:        String = ""      /// Anzahl
+    @State private var minQuantityIsOn: Bool   = false   /// Toggle Meldebestand
+    @State private var minQuantity:     String = ""      /// Meldebestand
+    @State private var minQuantityExpanded: Bool = false /// Meldebestand aufgeklappt
+    @State private var orderdIsOn:      Bool   = false   /// Toggle Bestellt
+    @State private var location:        String = ""      /// Lagerort
+    @State private var showDeleteConfirmation: Bool = false /// Bestätigungsdialog für Löschen
+    
+    /// Lädt die Item-Werte in die lokalen State-Variablen
+    private func loadItemValues() {
+        itemname = item.itemname
+        itemnumber = item.itemnumber
+        quantity = String(item.quantity)
+        minQuantityIsOn = item.minQuantityIsOn
+        minQuantity = String(item.minQuantity)
+        orderdIsOn = item.orderdIsOn
+        location = item.location
+    }
+    /// Prüft ob das Item neu ist (noch nicht in SwiftData gespeichert)
+    private var isNewItem: Bool {
+        item.modelContext == nil
+    }
     
     /// Speichert die lokalen Werte zurück ins Item, sendet an API und persistiert lokal
     private func saveItem() async {
@@ -46,25 +60,34 @@ struct Detail: View {
         )
 
         do {
-            _ = try await auth.artikelErstellen(artikel)
-            print("Artikel erfolgreich an API gesendet")
-
-            modelContext.insert(item)
+            if isNewItem {
+                _ = try await auth.artikelErstellen(artikel)
+                modelContext.insert(item)
+            } else {
+                _ = try await auth.artikelAktualisieren(artikel)
+            }
             try modelContext.save()
             dismiss()
         } catch {
             print("API Fehler:", error)
         }
     }
-    /// Löscht das Item und schließt die Ansicht
+    /// Löscht das Item lokal und auf dem Server und schließt die Ansicht
     private func deleteItem() {
-        modelContext.delete(item)
-        guard let _ = try? modelContext.save() else {
-            print("ERROR: Delete on Detail did not work")
-            return
+        Task {
+            do {
+                try await auth.artikelLoeschen(artikelnummer: item.itemnumber)
+            } catch {
+                print("API Lösch-Fehler:", error)
+            }
+            modelContext.delete(item)
+            guard let _ = try? modelContext.save() else {
+                print("ERROR: Delete on Detail did not work")
+                return
+            }
+            showDeleteConfirmation = false
+            dismiss()
         }
-        showDeleteConfirmation = false
-        dismiss()
     }
 // MARK: - Subviews
     /// Wiederverwendbare Stepper-Zeile mit Plus/Minus-Buttons und Textfeld
@@ -213,36 +236,47 @@ struct Detail: View {
         }
     }
     public var body: some View {
-        ZStack {
 #if os(iOS)
+        ZStack {
             List {
                 formContent
             }
             .listStyle(.insetGrouped)
+        }
+        .onAppear { loadItemValues() }
+        .navigationTitle(item.itemname)
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                }
+            }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    Task { await saveItem() }
+                } label: {
+                    Image(systemName: "checkmark")
+                }
+            }
+        }
+        .overlay {
+            if showDeleteConfirmation { deleteConfirmationOverlay }
+        }
 #else
+        ZStack {
             Form {
                 formContent
             }
             .formStyle(.grouped)
-#endif
         }
-        .onAppear() {
-            itemname = item.itemname
-            itemnumber = item.itemnumber
-            quantity = String(item.quantity)
-            minQuantityIsOn = item.minQuantityIsOn
-            minQuantity = String(item.minQuantity)
-            orderdIsOn = item.orderdIsOn
-            location = item.location
-        }
+        .onAppear { loadItemValues() }
         .navigationTitle(item.itemname)
-#if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(true)
-#elseif os(macOS)
         .navigationSubtitle(item.itemnumber)
         .navigationSplitViewColumnWidth(min: 180, ideal: 200)
-#endif
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Abbrechen") {
@@ -251,21 +285,22 @@ struct Detail: View {
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Sichern") {
-                    Task {
-                        await saveItem()
-                    }
+                    Task { await saveItem() }
                 }
             }
         }
         .overlay {
-            if showDeleteConfirmation {
-                deleteConfirmationOverlay
-            }
+            if showDeleteConfirmation { deleteConfirmationOverlay }
         }
+#endif
     }
 }
 
 #Preview {
-    Text("Hello Preview")
+    NavigationStack{
+        Detail(item: Item())
+            .environmentObject(AuthVerwaltung())
+            .modelContainer(for: Item.self, inMemory: true)
+    }
 }
 

@@ -27,6 +27,13 @@ struct Artikel: Codable, Identifiable {
     let bestand:       Int
     let meldebestand:  Int
     let lagerort:      String
+    enum CodingKeys: String, CodingKey {
+        case artikelnummer = "artikel_nummer"
+        case beschreibung
+        case bestand = "anzahl"
+        case meldebestand = "meldebestand"
+        case lagerort = "lagernummer"
+    }
 }
 /// Schlüsselbund um die Token zu Speichern
 enum Schluesselbund {
@@ -92,11 +99,21 @@ final class APIClient {
         return try await anfrage(pfad: "/login", methode: "POST", body: body, token: nil)
     }
     func artikelLaden(token: String) async throws -> [Artikel] {
-        return try await anfrage(pfad: "/articles", methode: "GET", body: Optional<LoginAnfrage>.none, token: token)
+        return try await anfrage(pfad: "/artikel", methode: "GET", body: Optional<LoginAnfrage>.none, token: token)
     }
-    func artikelErstellen(artikel: Artikel, token: String) async throws -> Artikel {
-        return try await anfrage(pfad: "/articles", methode: "POST", body: artikel, token: token)
+    func artikelErstellen(_ artikel: Artikel, token: String) async throws -> Artikel {
+          return try await anfrage(pfad: "/artikel", methode: "POST", body: artikel, token: token)
     }
+    func artikelAktualisieren(_ artikel: Artikel, token: String) async throws -> Artikel {
+        let pfad = "/artikel/\(artikel.artikelnummer)"
+        return try await anfrage(pfad: pfad, methode: "PUT", body: artikel, token: token)
+    }
+    struct DeleteAntwort: Decodable { let ok: Bool? }
+
+        func artikelLoeschen(artikelnummer: String, token: String) async throws {
+            let pfad = "/artikel/\(artikelnummer)"
+            let _: DeleteAntwort = try await anfrage(pfad: pfad, methode: "DELETE", body: Optional<Int>.none, token: token)
+        }
     private func anfrage<Body: Encodable, Antwort: Decodable>(
         pfad:    String,
         methode: String,
@@ -128,7 +145,7 @@ final class AuthVerwaltung: ObservableObject {      /// final class um es vor ve
     @Published var token:         String? = Schluesselbund.laden()
     @Published var fehlermeldung: String?
 
-    private let api = APIClient(basisURL: URL(string: "http://100.83.30.52:8000")!) /// private let ist eine konstante, die nur hier sichtbar ist
+    private let api = APIClient(basisURL: URL(string: "http://192.168.0.57:8000")!) /// private let ist eine konstante, die nur hier sichtbar ist
 
     func anmelden(firmenID: String, benutzername: String, passwort: String) async { /// async kann begonnen, pausiert und später fortgesetzt werden. await muss verwendet werden, bis Ergebnis verfügbar ist. Verwendet, weil Netzwerkaufruf Zeit braucht
         fehlermeldung = nil                         /// Anmeldung nicht fehlgeschlagen
@@ -148,9 +165,17 @@ final class AuthVerwaltung: ObservableObject {      /// final class um es vor ve
         guard let token else { return [] }
         return try await api.artikelLaden(token: token)
     }
+    func artikelAktualisieren(_ artikel: Artikel) async throws -> Artikel {
+        guard let token else { throw NetzwerkFehler.unbekannt }
+        return try await api.artikelAktualisieren(artikel, token: token)
+    }
     func artikelErstellen(_ artikel: Artikel) async throws -> Artikel {
         guard let token else { throw NetzwerkFehler.unbekannt }
-        return try await api.artikelErstellen(artikel: artikel, token: token)
+        return try await api.artikelErstellen(artikel, token: token)
+    }
+    func artikelLoeschen(artikelnummer: String) async throws {
+        guard let token else { throw NetzwerkFehler.unbekannt }
+        return try await api.artikelLoeschen(artikelnummer: artikelnummer, token: token)
     }
 }
 
