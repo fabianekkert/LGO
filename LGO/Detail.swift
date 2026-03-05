@@ -278,6 +278,56 @@ struct Detail: View {
         .navigationSubtitle(item.itemnumber)
         .navigationSplitViewColumnWidth(min: 180, ideal: 200)
         .toolbar {
+#if os(iOS)
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                }
+            }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    Task {
+
+                        // Werte aus dem Formular ins Item schreiben
+                        item.itemname = itemname
+                        item.itemnumber = itemnumber
+                        item.quantity = Int(quantity) ?? 0
+                        item.minQuantityIsOn = minQuantityIsOn
+                        item.minQuantity = Int(minQuantity) ?? 0
+                        item.orderdIsOn = orderdIsOn
+                        item.location = location
+
+                        // Artikel für API erstellen
+                        let artikel = Artikel(
+                            beschreibung: item.itemname,
+                            artikelnummer: item.itemnumber,
+                            bestand: item.quantity,
+                            meldebestand: item.minQuantity,
+                            lagerort: item.location
+                        )
+
+                        do {
+                            // API Request
+                            _ = try await auth.artikelErstellen(artikel)
+                            print("Artikel erfolgreich an API gesendet")    
+
+                            // Optional: lokal speichern (SwiftData)
+                            modelContext.insert(item)
+                            try modelContext.save()
+
+                            dismiss()
+
+                        } catch {
+                            print("API Fehler:", error)
+                        }
+                    }
+                } label: {
+                    Image(systemName: "checkmark")
+                }
+            }
+#elseif os(macOS)
             ToolbarItem(placement: .cancellationAction) {
                 Button("Abbrechen") {
                     dismiss()
@@ -288,6 +338,7 @@ struct Detail: View {
                     Task { await saveItem() }
                 }
             }
+#endif
         }
         .overlay {
             if showDeleteConfirmation { deleteConfirmationOverlay }
