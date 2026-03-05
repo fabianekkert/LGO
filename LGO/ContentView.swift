@@ -199,6 +199,44 @@ struct ContentView: View {
         }
     }
 #endif
+    /// Artikel vom Server laden und in SwiftData synchronisieren
+    private func artikelVomServerLaden() {
+        Task {
+            do {
+                let serverArtikel = try await auth.artikelLaden()
+                for artikel in serverArtikel {
+                    /// Prüfen ob Artikel bereits lokal existiert
+                    let nummer = artikel.artikelnummer
+                    let predicate = #Predicate<Item> { $0.itemnumber == nummer }
+                    let descriptor = FetchDescriptor<Item>(predicate: predicate)
+                    let vorhandene = try modelContext.fetch(descriptor)
+                    
+                    if let vorhandener = vorhandene.first {
+                        /// Vorhandenen Artikel aktualisieren
+                        vorhandener.itemname = artikel.beschreibung ?? artikel.artikelnummer
+                        vorhandener.quantity = artikel.bestand
+                        vorhandener.minQuantity = artikel.meldebestand
+                        vorhandener.minQuantityIsOn = artikel.meldebestand > 0
+                        vorhandener.location = artikel.lagerort
+                    } else {
+                        /// Neuen Artikel anlegen
+                        let neuesItem = Item(
+                            itemname: artikel.beschreibung ?? artikel.artikelnummer,
+                            itemnumber: artikel.artikelnummer,
+                            quantity: artikel.bestand,
+                            minQuantityIsOn: artikel.meldebestand > 0,
+                            minQuantity: artikel.meldebestand,
+                            location: artikel.lagerort
+                        )
+                        modelContext.insert(neuesItem)
+                    }
+                }
+                try modelContext.save()
+            } catch {
+                print("Fehler beim Laden der Artikel: \(error.localizedDescription)")
+            }
+        }
+    }
     /// Ansicht
     var body: some View {
 #if os(iOS)
@@ -282,6 +320,7 @@ struct ContentView: View {
                 }
             }
             .background(Color(.systemGroupedBackground))
+            .onAppear { artikelVomServerLaden() }
 #else
         itemList
             .navigationSplitViewColumnWidth(min: 180, ideal: 200)
@@ -320,6 +359,7 @@ struct ContentView: View {
                 }
             }
             .searchable(text: $searchText, prompt: "Suchen")
+            .onAppear { artikelVomServerLaden() }
 #endif
     }
 }
