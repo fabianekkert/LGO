@@ -68,6 +68,7 @@ struct Detail: View {
                 _ = try await auth.artikelAktualisieren(artikel)
             }
             try modelContext.save()
+            syncFromServer()
             dismiss()
         } catch {
             print("API Fehler:", error)
@@ -88,6 +89,53 @@ struct Detail: View {
             }
             showDeleteConfirmation = false
             dismiss()
+        }
+    }
+    /// Lädt die Artikel vom Server und synchronisiert sie in SwiftData (leichte Kopie aus ContentView)
+    private func syncFromServer() {
+        guard auth.token != nil else { return }
+        Task {
+            do {
+                let serverArtikel = try await auth.artikelLaden()
+                // Vorhandene Items aktualisieren oder neu anlegen
+                for artikel in serverArtikel {
+                    let nummer = artikel.artikelnummer
+                    let predicate = #Predicate<Item> { $0.itemnumber == nummer }
+                    let descriptor = FetchDescriptor<Item>(predicate: predicate)
+                    let vorhandene = try modelContext.fetch(descriptor)
+
+                    if let vorhandener = vorhandene.first {
+                        vorhandener.itemname = artikel.beschreibung ?? artikel.artikelnummer
+                        vorhandener.quantity = artikel.bestand
+                        vorhandener.minQuantity = artikel.meldebestand
+                        vorhandener.minQuantityIsOn = artikel.meldebestand > 0
+                        vorhandener.location = artikel.lagerort
+                        vorhandener.orderdIsOn = (artikel.bestellt ?? 0) == 1
+                    } else {
+                        let neuesItem = Item(
+                            itemname: artikel.beschreibung ?? artikel.artikelnummer,
+                            itemnumber: artikel.artikelnummer,
+                            quantity: artikel.bestand,
+                            minQuantityIsOn: artikel.meldebestand > 0,
+                            minQuantity: artikel.meldebestand,
+                            orderdIsOn: (artikel.bestellt ?? 0) == 1,
+                            location: artikel.lagerort
+                        )
+                        modelContext.insert(neuesItem)
+                    }
+                }
+                // Lokale Artikel löschen, die auf dem Server nicht mehr existieren
+                let serverNummern = Set(serverArtikel.map { $0.artikelnummer })
+                let alleLokalenArtikel = try modelContext.fetch(FetchDescriptor<Item>())
+                for lokaler in alleLokalenArtikel {
+                    if !serverNummern.contains(lokaler.itemnumber) {
+                        modelContext.delete(lokaler)
+                    }
+                }
+                try modelContext.save()
+            } catch {
+                print("Fehler bei Sync aus Detail:", error)
+            }
         }
     }
 // MARK: - Subviews
@@ -301,42 +349,7 @@ struct Detail: View {
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
-                    Task {
-
-                        // Werte aus dem Formular ins Item schreiben
-                        item.itemname = itemname
-                        item.itemnumber = itemnumber
-                        item.quantity = Int(quantity) ?? 0
-                        item.minQuantityIsOn = minQuantityIsOn
-                        item.minQuantity = Int(minQuantity) ?? 0
-                        item.orderdIsOn = orderdIsOn
-                        item.location = location
-
-                        // Artikel für API erstellen
-                        let artikel = Artikel(
-                            beschreibung: item.itemname,
-                            artikelnummer: item.itemnumber,
-                            bestand: item.quantity,
-                            meldebestand: item.minQuantity,
-                            lagerort: item.location,
-                            bestellt: item.orderdIsOn ? 1 : 0
-                        )
-
-                        do {
-                            // API Request
-                            _ = try await auth.artikelErstellen(artikel)
-                            print("Artikel erfolgreich an API gesendet")    
-
-                            // Optional: lokal speichern (SwiftData)
-                            modelContext.insert(item)
-                            try modelContext.save()
-
-                            dismiss()
-
-                        } catch {
-                            print("API Fehler:", error)
-                        }
-                    }
+                    Task { await saveItem() }
                 } label: {
                     Image(systemName: "checkmark")
                 }

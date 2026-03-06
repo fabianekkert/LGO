@@ -14,6 +14,7 @@ struct ContentView: View {
     @State private var isShowingScanner        = false
     @State private var showScannedItemDetail   = false
     @State private var currentSort: SortOption = .alphabetical
+    @State private var pollingTask: Task<Void, Never>?
     /// Sortier-Optionen
     enum SortOption: String, CaseIterable {
         case alphabetical = "Bezeichnung"
@@ -197,6 +198,21 @@ struct ContentView: View {
         }
     }
 #endif
+    /// Startet periodisches Polling vom Server (alle 5 Sekunden)
+    private func pollingStarten() {
+        pollingTask?.cancel()
+        pollingTask = Task {
+            while !Task.isCancelled {
+                artikelVomServerLaden()
+                try? await Task.sleep(for: .seconds(5))
+            }
+        }
+    }
+    /// Stoppt das Polling
+    private func pollingStoppen() {
+        pollingTask?.cancel()
+        pollingTask = nil
+    }
     /// Artikel vom Server laden und in SwiftData synchronisieren
     private func artikelVomServerLaden() {
         guard auth.token != nil else { return }
@@ -330,9 +346,12 @@ struct ContentView: View {
                 }
             }
             .background(Color(.systemGroupedBackground))
-            .onAppear { artikelVomServerLaden() }
+            .onAppear {
+                if auth.token != nil { pollingStarten() }
+            }
+            .onDisappear { pollingStoppen() }
             .onChange(of: auth.token) { _, newToken in
-                if newToken != nil { artikelVomServerLaden() }
+                if newToken != nil { pollingStarten() } else { pollingStoppen() }
             }
 #else
         itemList
@@ -379,9 +398,12 @@ struct ContentView: View {
                 }
             }
             .searchable(text: $searchText, prompt: "Suchen")
-            .onAppear { artikelVomServerLaden() }
+            .onAppear {
+                if auth.token != nil { pollingStarten() }
+            }
+            .onDisappear { pollingStoppen() }
             .onChange(of: auth.token) { _, newToken in
-                if newToken != nil { artikelVomServerLaden() }
+                if newToken != nil { pollingStarten() } else { pollingStoppen() }
             }
 #endif
     }
@@ -394,3 +416,4 @@ struct ContentView: View {
     .environmentObject(AuthVerwaltung())
     .modelContainer(for: Item.self, inMemory: true)
 }
+
