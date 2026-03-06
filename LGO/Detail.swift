@@ -56,7 +56,8 @@ struct Detail: View {
             artikelnummer: item.itemnumber,
             bestand: item.quantity,
             meldebestand: item.minQuantity,
-            lagerort: item.location
+            lagerort: item.location,
+            bestellt: item.orderdIsOn ? 1 : 0
         )
 
         do {
@@ -305,7 +306,8 @@ struct Detail: View {
                             artikelnummer: item.itemnumber,
                             bestand: item.quantity,
                             meldebestand: item.minQuantity,
-                            lagerort: item.location
+                            lagerort: item.location,
+                            bestellt: item.orderdIsOn ? 1 : 0
                         )
 
                         do {

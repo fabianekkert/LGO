@@ -37,17 +37,24 @@ struct LG0App: App {
                     }
                 }
             }
+#if os(iOS)
             .onChange(of: scenePhase) { _, newPhase in
                 if newPhase == .background {
                     auth.abmelden()
                 }
             }
+#elseif os(macOS)
+            .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
+                auth.abmelden()
+            }
+#endif
         }
         .modelContainer(sharedModelContainer)
         .environmentObject(auth)
     }
     init() {
         print(URL.applicationSupportDirectory.path(percentEncoded: false))
+        Schluesselbund.loeschen()
     }
 }
 

@@ -7,9 +7,7 @@ struct ContentView: View {
     @Query var items: [Item]
     @Environment(\.modelContext) var modelContext
     @EnvironmentObject var auth: AuthVerwaltung
-#if os(macOS)
-    @Environment(\.openWindow) private var openWindow
-#endif
+
     @State private var scannedItem: Item?
     @State private var searchText              = ""
     @State private var sheetIsPresented        = false
@@ -201,9 +199,11 @@ struct ContentView: View {
 #endif
     /// Artikel vom Server laden und in SwiftData synchronisieren
     private func artikelVomServerLaden() {
+        guard auth.token != nil else { return }
         Task {
             do {
                 let serverArtikel = try await auth.artikelLaden()
+                print("Server hat \(serverArtikel.count) Artikel geliefert")
                 for artikel in serverArtikel {
                     /// Prüfen ob Artikel bereits lokal existiert
                     let nummer = artikel.artikelnummer
@@ -218,6 +218,7 @@ struct ContentView: View {
                         vorhandener.minQuantity = artikel.meldebestand
                         vorhandener.minQuantityIsOn = artikel.meldebestand > 0
                         vorhandener.location = artikel.lagerort
+                        vorhandener.orderdIsOn = (artikel.bestellt ?? 0) == 1
                     } else {
                         /// Neuen Artikel anlegen
                         let neuesItem = Item(
@@ -226,14 +227,23 @@ struct ContentView: View {
                             quantity: artikel.bestand,
                             minQuantityIsOn: artikel.meldebestand > 0,
                             minQuantity: artikel.meldebestand,
+                            orderdIsOn: (artikel.bestellt ?? 0) == 1,
                             location: artikel.lagerort
                         )
                         modelContext.insert(neuesItem)
                     }
                 }
+                /// Lokale Artikel löschen, die auf dem Server nicht mehr existieren
+                let serverNummern = Set(serverArtikel.map { $0.artikelnummer })
+                let alleLokalenArtikel = try modelContext.fetch(FetchDescriptor<Item>())
+                for lokaler in alleLokalenArtikel {
+                    if !serverNummern.contains(lokaler.itemnumber) {
+                        modelContext.delete(lokaler)
+                    }
+                }
                 try modelContext.save()
             } catch {
-                print("Fehler beim Laden der Artikel: \(error.localizedDescription)")
+                print("Fehler beim Laden der Artikel: \(error)")
             }
         }
     }
@@ -321,13 +331,23 @@ struct ContentView: View {
             }
             .background(Color(.systemGroupedBackground))
             .onAppear { artikelVomServerLaden() }
+            .onChange(of: auth.token) { _, newToken in
+                if newToken != nil { artikelVomServerLaden() }
+            }
 #else
         itemList
             .navigationSplitViewColumnWidth(min: 180, ideal: 200)
+            .sheet(isPresented: $sheetIsPresented) {
+                NavigationStack {
+                    Detail(item: Item())
+                        .navigationTitle("Neuer Artikel")
+                }
+                .frame(minWidth: 400, minHeight: 500)
+            }
             .toolbar {
                 ToolbarItem(placement: .automatic) {   /// Item hinzufügen
                     Button {
-                        openWindow(id: "new-item")
+                        sheetIsPresented.toggle()
                     } label: {
                         Image(systemName: "plus")
                     }
@@ -360,6 +380,9 @@ struct ContentView: View {
             }
             .searchable(text: $searchText, prompt: "Suchen")
             .onAppear { artikelVomServerLaden() }
+            .onChange(of: auth.token) { _, newToken in
+                if newToken != nil { artikelVomServerLaden() }
+            }
 #endif
     }
 }

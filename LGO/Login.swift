@@ -99,9 +99,6 @@ struct Login: View {
             fehlertext = nil
             istLaden = true
 
-            auth.token = "test" /// Nur als Bypass für Testzwecke
-            return              ///         "  "
-
             await auth.anmelden(firmenID: companyid, benutzername: username, passwort: passwort)
             istLaden = false
 

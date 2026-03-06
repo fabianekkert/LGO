@@ -27,12 +27,14 @@ struct Artikel: Codable, Identifiable {
     let bestand:       Int
     let meldebestand:  Int
     let lagerort:      String
+    let bestellt:      Int?
     enum CodingKeys: String, CodingKey {
         case artikelnummer = "artikel_nummer"
         case beschreibung
         case bestand = "anzahl"
         case meldebestand = "meldebestand"
         case lagerort = "lagernummer"
+        case bestellt
     }
 }
 /// Schlüsselbund um die Token zu Speichern
@@ -135,7 +137,11 @@ final class APIClient {
         guard (200...299).contains(http.statusCode) else { throw NetzwerkFehler.http(http.statusCode) }
         
         do { return try JSONDecoder().decode(Antwort.self, from: daten) }
-        catch { throw NetzwerkFehler.decode }
+        catch {
+            print("Decode-Fehler: \(error)")
+            print("Server-Antwort: \(String(data: daten, encoding: .utf8) ?? "nicht lesbar")")
+            throw NetzwerkFehler.decode
+        }
     }
 }
 
@@ -163,7 +169,12 @@ final class AuthVerwaltung: ObservableObject {      /// final class um es vor ve
     }
     func artikelLaden() async throws -> [Artikel] { /// async = läuft asyncron,throws = kann Fehler werfen
         guard let token else { return [] }
-        return try await api.artikelLaden(token: token)
+        do {
+            return try await api.artikelLaden(token: token)
+        } catch NetzwerkFehler.http(401) {
+            abmelden()
+            return []
+        }
     }
     func artikelAktualisieren(_ artikel: Artikel) async throws -> Artikel {
         guard let token else { throw NetzwerkFehler.unbekannt }
