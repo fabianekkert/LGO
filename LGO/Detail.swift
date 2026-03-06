@@ -214,14 +214,26 @@ struct Detail: View {
         }
         minQuantitySection
         Section {
-            HStack {
+            HStack(alignment: .firstTextBaseline) {
                 Text("Lagerort")
                 Spacer()
-                HStack(spacing: 8) {
-                    TextField("Position", text: $location)
+                ZStack(alignment: .trailing) {
+                    if location.isEmpty {
+                        Text("Position")
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: 200, alignment: .trailing)
+                            .contentTransition(.opacity)
+                    }
+                    TextField("", text: $location)
+                        .textFieldStyle(.plain)
                         .multilineTextAlignment(.trailing)
-                    Spacer()
+                        .frame(maxWidth: 200, alignment: .trailing)
+                        .autocorrectionDisabled(true)
+#if os(iOS)
+                        .textInputAutocapitalization(.never)
+#endif
                 }
+                .frame(minWidth: 80, maxWidth: 200, alignment: .trailing)
             }
             MapView(location: location)
                 .listRowInsets(EdgeInsets())
