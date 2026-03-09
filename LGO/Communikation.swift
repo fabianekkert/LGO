@@ -20,6 +20,13 @@ struct LoginAntwort: Codable {
     let token:        String
     let rolle:        String
 }
+struct BenutzerOut: Codable, Identifiable {
+    let id:          Int
+    let benutzername: String
+    let rolle:       String
+    let firmen_id:   String
+}
+
 struct Artikel: Codable, Identifiable {
     var id:            String { artikelnummer }
     let beschreibung:  String?
@@ -103,6 +110,9 @@ final class APIClient {
     func artikelLaden(token: String) async throws -> [Artikel] {
         return try await anfrage(pfad: "/artikel", methode: "GET", body: Optional<LoginAnfrage>.none, token: token)
     }
+    func benutzerLaden(token: String) async throws -> [BenutzerOut] {
+        return try await anfrage(pfad: "/benutzer", methode: "GET", body: Optional<LoginAnfrage>.none, token: token)
+    }
     func artikelErstellen(_ artikel: Artikel, token: String) async throws -> Artikel {
           return try await anfrage(pfad: "/artikel", methode: "POST", body: artikel, token: token)
     }
@@ -149,9 +159,13 @@ final class APIClient {
 @MainActor                                          /// bringt alles auf den Hauptthread
 final class AuthVerwaltung: ObservableObject {      /// final class um es vor vererbung und überschreibungen zu schützen
     @Published var token:         String? = Schluesselbund.laden()
+    @Published var rolle:         String  = UserDefaults.standard.string(forKey: "benutzerRolle") ?? ""
     @Published var fehlermeldung: String?
 
-    private let api = APIClient(basisURL: URL(string: "http://192.168.0.57:8000")!) /// private let ist eine konstante, die nur hier sichtbar ist
+    private var api: APIClient {                    /// API-Client wird dynamisch aus der gespeicherten Server-Adresse erzeugt
+        let adresse = UserDefaults.standard.string(forKey: "serverAdresse") ?? "192.168.2.172:8000"
+        return APIClient(basisURL: URL(string: "http://\(adresse)")!)
+    }
 
     func anmelden(firmenID: String, benutzername: String, passwort: String) async { /// async kann begonnen, pausiert und später fortgesetzt werden. await muss verwendet werden, bis Ergebnis verfügbar ist. Verwendet, weil Netzwerkaufruf Zeit braucht
         fehlermeldung = nil                         /// Anmeldung nicht fehlgeschlagen
@@ -159,6 +173,8 @@ final class AuthVerwaltung: ObservableObject {      /// final class um es vor ve
             let antwort = try await api.anmelden(firmenID: firmenID, benutzername: benutzername, passwort: passwort) /// Aufruf ist async throws, weil Anfrage warten muss und Fehler auftreten können
             Schluesselbund.speichern(antwort.token) /// token wird im Schlüsselbund gespeichert
             token = antwort.token                   /// token wird published. Weil das im @MainActor passiert geschieht das im Hauptthread und löst Update im UI aus
+            rolle = antwort.rolle
+            UserDefaults.standard.set(antwort.rolle, forKey: "benutzerRolle")
         } catch {                                   /// Fehlerbehandlung
             fehlermeldung = (error as? LocalizedError)?.errorDescription ?? "Login fehlgeschlagen" /// Mit fehlermeldung und token kann UI aktuallisiert werden
         }
@@ -166,11 +182,22 @@ final class AuthVerwaltung: ObservableObject {      /// final class um es vor ve
     func abmelden() {
         Schluesselbund.loeschen()
         token = nil
+        rolle = ""
+        UserDefaults.standard.removeObject(forKey: "benutzerRolle")
     }
     func artikelLaden() async throws -> [Artikel] { /// async = läuft asyncron,throws = kann Fehler werfen
         guard let token else { return [] }
         do {
             return try await api.artikelLaden(token: token)
+        } catch NetzwerkFehler.http(401) {
+            abmelden()
+            return []
+        }
+    }
+    func benutzerLaden() async throws -> [BenutzerOut] {
+        guard let token else { return [] }
+        do {
+            return try await api.benutzerLaden(token: token)
         } catch NetzwerkFehler.http(401) {
             abmelden()
             return []
