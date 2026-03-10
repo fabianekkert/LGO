@@ -1,8 +1,3 @@
-///  Login.swift
-///  LGO
-///  Created by Fabian on 12.02.26.
-///  In dieser Datei wird der LoginScreen beschrieben.
-
 import SwiftUI
 import SwiftData
 

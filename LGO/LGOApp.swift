@@ -1,7 +1,3 @@
-///  LGOApp.swift
-///  LGO
-///  Created by Fabian on 09.02.26.
-
 import SwiftUI
 import SwiftData
 

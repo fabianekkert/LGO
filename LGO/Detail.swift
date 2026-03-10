@@ -1,8 +1,3 @@
-///  Detail.swift
-///  LGO
-///  Created by Fabian on 11.02.26.
-///  In dieser Datei befindet sich die Detail View. Diese Ansicht kommt auch, wenn man einen neuen Artikel anlegt.
-
 import SwiftUI
 import SwiftData
 

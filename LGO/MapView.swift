@@ -1,8 +1,3 @@
-///  MapView.swift
-///  LGO
-///  Created by Fabian on 27.02.26.
-///  Diese View zeigt die Lagerkarte mit einem Punkt für die Position an
-
 import SwiftUI
 
 struct MapView: View {

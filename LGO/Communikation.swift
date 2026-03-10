@@ -1,7 +1,3 @@
-///  File.swift
-///  LGO
-///  Created by Fabian on 10.02.26.
-
 import Foundation
 import Security
 import SwiftUI
