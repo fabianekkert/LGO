@@ -27,6 +27,10 @@ struct BenutzerOut: Codable, Identifiable {
     let firmen_id:   String
 }
 
+struct PasswortAendern: Encodable {
+    let neues_passwort: String
+}
+
 struct Artikel: Codable, Identifiable {
     var id:            String { artikelnummer }
     let beschreibung:  String?
@@ -120,6 +124,13 @@ final class APIClient {
         let pfad = "/artikel/\(artikel.artikelnummer)"
         return try await anfrage(pfad: pfad, methode: "PUT", body: artikel, token: token)
     }
+    struct OkAntwort: Decodable { let ok: Bool? }
+
+    func passwortAendern(benutzerID: Int, neuesPasswort: String, token: String) async throws {
+        let pfad = "/benutzer/\(benutzerID)/passwort"
+        let _: OkAntwort = try await anfrage(pfad: pfad, methode: "PUT", body: PasswortAendern(neues_passwort: neuesPasswort), token: token)
+    }
+
     struct DeleteAntwort: Decodable { let ok: Bool? }
 
         func artikelLoeschen(artikelnummer: String, token: String) async throws {
@@ -163,7 +174,7 @@ final class AuthVerwaltung: ObservableObject {      /// final class um es vor ve
     @Published var fehlermeldung: String?
 
     private var api: APIClient {                    /// API-Client wird dynamisch aus der gespeicherten Server-Adresse erzeugt
-        let adresse = UserDefaults.standard.string(forKey: "serverAdresse") ?? "192.168.2.172:8000"
+        let adresse = UserDefaults.standard.string(forKey: "serverAdresse") ?? "192.168.0.57:8000"
         return APIClient(basisURL: URL(string: "http://\(adresse)")!)
     }
 
@@ -214,6 +225,10 @@ final class AuthVerwaltung: ObservableObject {      /// final class um es vor ve
     func artikelLoeschen(artikelnummer: String) async throws {
         guard let token else { throw NetzwerkFehler.unbekannt }
         return try await api.artikelLoeschen(artikelnummer: artikelnummer, token: token)
+    }
+    func passwortAendern(benutzerID: Int, neuesPasswort: String) async throws {
+        guard let token else { throw NetzwerkFehler.unbekannt }
+        try await api.passwortAendern(benutzerID: benutzerID, neuesPasswort: neuesPasswort, token: token)
     }
 }
 

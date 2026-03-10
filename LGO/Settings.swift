@@ -9,6 +9,7 @@ public struct Settings: View {
     @State private var bearbeitetePasswoerter: [Int: String] = [:]
     @State private var aufgeklappterBenutzer: Int?
     @State private var ladefehler: String?
+    @State private var passwortStatus: [Int: String] = [:]
 
     public init() {}
 
@@ -24,10 +25,14 @@ public struct Settings: View {
                     Spacer()
                     TextField("IP:Port", text: $serverAdresse)
                         .multilineTextAlignment(.trailing)
-                        .keyboardType(.numbersAndPunctuation)
                         .autocorrectionDisabled()
+#if os(iOS)
+                        .keyboardType(.numbersAndPunctuation)
                         .textInputAutocapitalization(.never)
+#endif
                 }
+
+                
 
                 // Nutzer verwalten — nur für Admins
                 if auth.rolle == "admin" {
@@ -53,7 +58,6 @@ public struct Settings: View {
                                         Spacer()
                                         TextField("Benutzername", text: bindingName(fuer: nutzer))
                                             .multilineTextAlignment(.trailing)
-                                            .textInputAutocapitalization(.never)
                                             .autocorrectionDisabled()
                                     }
 
@@ -63,8 +67,10 @@ public struct Settings: View {
                                         Spacer()
                                         SecureField("Neues Passwort", text: bindingPasswort(fuer: nutzer))
                                             .multilineTextAlignment(.trailing)
-                                            .textInputAutocapitalization(.never)
                                             .autocorrectionDisabled()
+#if os(iOS)
+                                            .textInputAutocapitalization(.never)
+#endif
                                     }
 
                                     HStack {
@@ -74,6 +80,23 @@ public struct Settings: View {
                                         Text(nutzer.rolle.capitalized)
                                             .foregroundStyle(.secondary)
                                     }
+
+                                    if let status = passwortStatus[nutzer.id] {
+                                        Text(status)
+                                            .font(.caption)
+                                            .foregroundStyle(status.contains("Fehler") ? .red : .green)
+                                    }
+
+                                    Button {
+                                        Task {
+                                            await passwortSpeichern(fuer: nutzer)
+                                        }
+                                    } label: {
+                                        Text("Passwort speichern")
+                                            .frame(maxWidth: .infinity)
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                    .disabled((bearbeitetePasswoerter[nutzer.id] ?? "").count < 4)
                                 }
                                 .padding(.vertical, 4)
                             } label: {
@@ -81,6 +104,17 @@ public struct Settings: View {
                             }
                         }
                     }
+                }
+            }
+            Section {
+                Button(role: .destructive) {
+                    auth.abmelden()
+                } label: {
+                    HStack {
+                        Label("Abmelden", systemImage: "rectangle.portrait.and.arrow.right")
+                        Spacer()
+                    }
+                    .foregroundStyle(.red)
                 }
             }
             .navigationTitle("Einstellungen")
@@ -105,6 +139,18 @@ public struct Settings: View {
             ladefehler = nil
         } catch {
             ladefehler = error.localizedDescription
+        }
+    }
+
+    private func passwortSpeichern(fuer nutzer: BenutzerOut) async {
+        let neuesPasswort = bearbeitetePasswoerter[nutzer.id] ?? ""
+        guard neuesPasswort.count >= 4 else { return }
+        do {
+            try await auth.passwortAendern(benutzerID: nutzer.id, neuesPasswort: neuesPasswort)
+            passwortStatus[nutzer.id] = "Passwort geändert"
+            bearbeitetePasswoerter[nutzer.id] = ""
+        } catch {
+            passwortStatus[nutzer.id] = "Fehler: \(error.localizedDescription)"
         }
     }
 
